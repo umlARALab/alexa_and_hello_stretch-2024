@@ -1,6 +1,9 @@
 tables = [(3, 4), (4, 5), (3, 4), (4, 5)]
 num_tables = len(tables)
 
+objects = [(3, 4), (4, 5), (3, 4), (4, 5)]
+num_objects = len(objects)
+
 def find_tables():
 
     # get list of tables from somewhere
