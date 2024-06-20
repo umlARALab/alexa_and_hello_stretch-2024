@@ -7,9 +7,9 @@ r = stretch_body.robot.Robot()
 r.startup()
 
 # lift height constants
-TABLE_HEIGHT = .75
+TABLE_HEIGHT = 1.1 # avg table height + length of gripper (also max height by chance)
 LIFT_MID_HEIGHT = .55  
-GROUND_REACH_HEIGHT = 0  
+GROUND_REACH_HEIGHT = 0.2 
 
 # velocity constants
 BASE_TRANS_VEL = .05
@@ -19,6 +19,9 @@ BASE_STOP_VEL = 0
 # stretch robot dimensions
 BASE_LENGTH = .34
 BASE_WIDTH = .33
+
+# table lengths
+ARM_OUT_TO_TABLE_LEN = .3
 
 if not r.startup():
     exit() # failed to start robot!
@@ -30,85 +33,84 @@ if not r.is_calibrated():
 def stop():
     r.stop()
 
+def stow():
+    r.stow()
+
 def scan_room():
-
-    # set up lift and arm posistion and vel
-    r.lift.move_to(LIFT_MID_HEIGHT)
-    r.base.set_rotational_velocity(BASE_ROT_VEL)
-    r.head.pose('ahead')
+    r.head.move_to('head_pan', 1.77)
     r.push_command()
-    r.lift.motor.wait_until_at_setpoint()
-
-    # spin around
-    r.base.rotate_by(2 * math.pi)
-    r.base.push_command()
-    r.base.left_wheel.wait_until_at_setpoint()
-
-    stop()
+    time.sleep(.5)
+    r.head.move_by('head_pan', -4.1, 0.2)
+    r.push_command()
 
 def reach_table():
-    ARM_OUT_LEN = .6
 
     # set up arm and lift
+    # r.head.move_to('head_pan', math.pi / -2)
     r.lift.move_to(TABLE_HEIGHT)
-    r.head.pose('ahead')
-    r.arm.move_to(ARM_OUT_LEN)
-    r.push_command()
+    r.arm.move_to(ARM_OUT_TO_TABLE_LEN)
     r.lift.motor.wait_until_at_setpoint()
     r.arm.motor.wait_until_at_setpoint()
+    r.push_command()
 
     # tilt wrist and open gripper
-    r.head.pose('wheels')
-    r.end_of_arm.move_to('wrist_pitch', -0.5)
-    r.end_of_arm.move_to('stretch_gripper', 50)
+    r.end_of_arm.move_to('wrist_pitch', -1.5) # point down
+    r.end_of_arm.move_to('stretch_gripper', 50) # i think has range of -50 (closed) to 50 (open)
     r.push_command()
 
 def move_to_table(angle, dist):
 
     move_time = BASE_TRANS_VEL / dist
-    dist = dist - ARM_OUT_LEN - BASE_LENGTH
+    dist = dist - ARM_OUT_TO_TABLE_LEN
 
-    # set vel
-    r.base.set_rotational_velocity(BASE_ROT_VEL)
-    r.base.set_translate_velocity(BASE_TRANS_VEL)
+    r.stow()
     r.push_command()
-    time.sleep(1)
 
     # move to table
-    r.base.rotate_by(angle)
+    r.base.rotate_by(angle, BASE_TRANS_VEL)
     r.base.left_wheel.wait_until_at_setpoint()
-    r.base.translate_by(dist)
+    r.base.translate_by(dist, BASE_ROT_VEL)
     r.base.push_command()
     time.sleep(move_time)
 
-    stop()
+    # set arm and gripper
+    r.arm.move_to(0)
+    r.lift.move_to(TABLE_HEIGHT)
+    r.end_of_arm.move_to('stretch_gripper', 0)
+    r.end_of_arm.move_to('wrist_pitch', 0)
+    r.push_command()
+
+    reach_table()
     
 def grab_from_ground(angle, dist):
-    ARM_OUT_LEN = .30
+    ARM_OUT_LEN = .2
 
-    dist = dist - ARM_OUT_LEN - BASE_LENGTH
+    dist = dist - ARM_OUT_LEN
     move_time = BASE_TRANS_VEL / dist
 
     return_angle = math.pi - angle
     return_dist = dist * -1
 
-    # set vel and start posistions
-    r.base.set_rotational_velocity(BASE_ROT_VEL)
-    r.base.set_translate_velocity(BASE_TRANS_VEL)
-    r.lift.move_to(GROUND_REACH_HEIGHT)
-    r.head.pose('wheel')
-    r.arm.move_to(ARM_OUT_LEN)
-    r.end_of_arm.move_to('wrist_pitch', -0.5)
-    r.end_of_arm.move_to('stretch_gripper', 50)
+    r.stow()
     r.push_command()
-    time.sleep(1)
 
     # move to object
-    r.base.rotate_by(angle)
+    r.base.rotate_by(angle, BASE_ROT_VEL)
     r.base.left_wheel.wait_until_at_setpoint()
-    r.base.translate_by(dist)
+    r.base.translate_by(dist, BASE_TRANS_VEL)
     r.base.push_command()
     time.sleep(move_time)
+
+    # set up for grab
+    r.head.pose('wheels')
+    r.arm.move_to(ARM_OUT_LEN)
+    r.end_of_arm.move_to('wrist_pitch', -1.5)
+    r.end_of_arm.move_to('stretch_gripper', 50) # how to open it wider??
+    r.push_command()
+    time.sleep(1)
+    r.lift.move_to(GROUND_REACH_HEIGHT)
+    r.lift.motor.wait_until_at_setpoint()
+    r.push_command()
 
     # pick up object
     r.end_of_arm.move_to('stretch_gripper', -50)
@@ -117,10 +119,11 @@ def grab_from_ground(angle, dist):
     r.base.push_command()
     time.sleep(1)
 
+    r.stow()
+    r.push_command()
+
     # go back to start pos
     r.base.rotate_by(return_angle)
     r.base.translate_by(return_dist)
     r.lift.move_to(TABLE_HEIGHT)
     r.base.push_command()
-
-    stop()

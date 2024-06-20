@@ -1,6 +1,6 @@
 import ngrok
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_ask_sdk.skill_adapter import SkillAdapter
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler, AbstractExceptionHandler
@@ -10,6 +10,7 @@ from ask_sdk_model.dialog import (ElicitSlotDirective, DelegateDirective)
 from ask_sdk_model import (Response, IntentRequest, DialogState, SlotConfirmationStatus, Slot, ui, IntentConfirmationStatus)
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
+# from ask_sdk_core.attributes_manager import AttributesManager
 
 from objects import *
 # from stretch import *
@@ -22,12 +23,19 @@ app = Flask(__name__)
 
 sb = SkillBuilder()
 
+current_intent = ""
+
 @app.route("/")
 def homepage():
-    return "Welcome!"
+    global current_intent
+    return render_template('index.html', intent = current_intent)
+    #return "Welcome!"
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
+    global current_intent
+    current_intent = "Launch Request"
+
     # type: (HandlerInput) -> Response
     speech_text = "Welcome to the Alexa Skills Kit, you can say hello!"
 
@@ -38,16 +46,23 @@ def launch_request_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("HelloWorldIntent"))
 def hello_world_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello World Intent"
+
     # type: (HandlerInput) -> Response
     speech_text = "Hello World!"
 
     handler_input.response_builder.speak(speech_text).set_card(
         SimpleCard("Hello World", speech_text)).set_should_end_session(
         True)
+    
     return handler_input.response_builder.response
 
 @sb.request_handler(can_handle_func=is_intent_name("AMAZON.HelpIntent"))
 def help_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Amazon Help Intent"
+
     # type: (HandlerInput) -> Response
     speech_text = "You can say hello to me!"
 
@@ -60,6 +75,9 @@ def help_intent_handler(handler_input):
         is_intent_name("AMAZON.CancelIntent")(handler_input) or
         is_intent_name("AMAZON.StopIntent")(handler_input))
 def cancel_and_stop_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Amazon Cancel or Stop Intent"
+
     # type: (HandlerInput) -> Response
     speech_text = "Goodbye!"
 
@@ -70,6 +88,9 @@ def cancel_and_stop_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_request_type("SessionEndedRequest"))
 def session_ended_request_handler(handler_input):
+    global current_intent
+    current_intent = "Session End Request"
+
     # type: (HandlerInput) -> Response
     # any cleanup logic goes here
 
@@ -77,6 +98,9 @@ def session_ended_request_handler(handler_input):
 
 @sb.exception_handler(can_handle_func=lambda i, e: True)
 def all_exception_handler(handler_input, exception):
+    global current_intent
+    current_intent = "Exception Handler"
+
     # type: (HandlerInput, Exception) -> Response
     # Log the exception in CloudWatch Logs
     print(exception)
@@ -90,6 +114,9 @@ def all_exception_handler(handler_input, exception):
 
 @sb.request_handler(can_handle_func=is_intent_name("ScanRoom"))
 def scan_room_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Scan Room"
+
     # type: (HandlerInput) -> Response
     speech_text = "Scanning the room!"
 
@@ -100,6 +127,9 @@ def scan_room_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("GrabFromTable"))
 def grab_from_table_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Grab From Table"
+
     # type: (HandlerInput) -> Response
     speech_text = "Grab from table!"
 
@@ -110,6 +140,8 @@ def grab_from_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("MoveToTable"))
 def move_to_table_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Move To Table"
 
     table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].value
 
@@ -144,6 +176,7 @@ def move_to_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("ChooseTable"))
 def choose_table_intent_handler(handler_input):
+
     # type: (HandlerInput) -> Response
     
     table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].resolutions.resolutions_per_authority[0].values[0].value.name
@@ -164,6 +197,8 @@ def choose_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("HandFromGround"))
 def hand_from_ground_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Hand From Ground"
 
     if num_objects == 1:
         speech_text = "Grabbing the object."
@@ -200,34 +235,57 @@ def choose_object_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("StopRobotIntent"))
 def stop_robot_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Stop"
+
     # type: (HandlerInput) -> Response
     
-    speech_text = "Stopping Hello Stretch"
+    speech_text = "Stopping Hello Stretch!"
 
     #stop()
     
     return handler_input.response_builder.speak(speech_text).response
 
+@sb.request_handler(can_handle_func=is_intent_name("StowIntent"))
+def stow_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Stow"
+
+    # type: (HandlerInput) -> Response
+    
+    speech_text = "Stowing Hello Stretch!"
+
+    #stow()
+    
+    return handler_input.response_builder.speak(speech_text).response
+
 @sb.request_handler(can_handle_func=is_intent_name("GetIntentsList"))
 def get_intents_list_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Get Action List"
+
     # type: (HandlerInput) -> Response
 
-    want_to_continue = handler_input.request_envelope.request.intent.slots['want_to_continue'].resolutions.resolutions_per_authority[0].values[0].value.name
-    
-    speech_text = (
-            "Your Hello Stretch can scan the room," 
-            + "reach for a table, move to a table, "
-            + "or pick up from the ground. Which action would you like? Or would you like me to repeat the list?")
-    reprompt = "Which action would you like?"
+    # want_to_continue = handler_input.request_envelope.request.intent.slots['want_to_continue'].resolutions.resolutions_per_authority[0].values[0].value.name
+    persistence_attr = handler_input.attributes_manager.persistent_attributes
 
-    if want_to_continue == "yes":
-        return handler_input.response_builder.speak(speech_text).ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc")).response
-    elif want_to_continue == "repeat":
+    intent_choice = handler_input.request_envelope.request.intent.slots['intent_choice'].resolutions.resolutions_per_authority[0].values[0].value.name
+    print(intent_choice)
+
+    if intent_choice == "scan room":
+        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="ScanRoom"))).response
+    elif intent_choice == "pick up from the ground":
+        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="HandFromGround"))).response
+    elif intent_choice == "move to a table":
+        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="MoveToTable"))).response
+    elif intent_choice == "reach for a table":
+        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="GrabFromTable"))).response
+    elif intent_choice == "repeat":
+        intent_choice = None
+        #handler_input.attributes_manager.set_session_attributes(None)
         return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="GetIntentsList"))).response
     else:
         return handler_input.response_builder.speak("Ok. Goodbye")
-
-
 
 @sb.request_handler(can_handle_func=is_intent_name("ChooseIntent"))
 def choose_intent_handler(handler_input):
