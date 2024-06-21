@@ -29,7 +29,6 @@ current_intent = ""
 def homepage():
     global current_intent
     return render_template('index.html', intent = current_intent)
-    #return "Welcome!"
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):

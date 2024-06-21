@@ -1,10 +1,10 @@
-import stretch_body.robot
+import stretch_body.robot as r
+from stretch_body import robot_params
+from stretch_body import hello_utils as hu
 import time
 import math
 
-# setup and start stretch
-r = stretch_body.robot.Robot()
-r.startup()
+#### Constants
 
 # lift height constants
 TABLE_HEIGHT = 1.1 # avg table height + length of gripper (also max height by chance)
@@ -22,6 +22,10 @@ BASE_WIDTH = .33
 
 # table lengths
 ARM_OUT_TO_TABLE_LEN = .3
+
+# setup and start stretch
+#r = stretch_body.robot.Robot()
+r.startup()
 
 if not r.startup():
     exit() # failed to start robot!
