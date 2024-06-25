@@ -1,6 +1,6 @@
 import ngrok
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_ask_sdk.skill_adapter import SkillAdapter
 from flask import request
 from ask_sdk_core.skill_builder import SkillBuilder
@@ -25,6 +25,10 @@ app = Flask(__name__)
 sb = SkillBuilder()
 
 current_intent = ""
+custom_intent_num = 0
+custom_intent_1 = []
+custom_intent_2 = []
+custom_intent_3 = []
 
 @app.route("/", methods=['GET', 'POST'])
 def homepage():
@@ -315,6 +319,8 @@ skill_response.register(app=app, route="/")
 def button_click():
     button_id = request.form
 
+    print(button_id.get('name'))
+
     if "scan_room" in button_id:
         print("scan")
     if "grab_from_table" in button_id:
@@ -330,6 +336,56 @@ def button_click():
 
     # Here you can perform any server-side actions based on which button was pressed
     return render_template('button_click.html')
+
+@app.route('/custom_intent', methods=['POST'])
+def custom_intent():
+    global custom_intent_num, custom_intent_1, custom_intent_2, custom_intent_3
+
+    print("num: " + str(custom_intent_num))
+
+    if custom_intent_num == 1:
+        custom_intent = custom_intent_1
+    elif custom_intent_num == 2:
+        custom_intent = custom_intent_2
+    elif custom_intent_num == 3:
+        custom_intent = custom_intent_3
+    else:
+        custom_intent = None
+        result = "please choose an action"
+        print(result)
+
+        return jsonify({'result': result})
+
+    print(custom_intent)
+
+    if custom_intent != None:
+        id = request.form.get('button_id')
+        print(id)
+
+        if id == "clear":
+            custom_intent.clear()
+        else:
+            custom_intent.append(id)
+
+        
+        return jsonify({'result': id})
+        
+
+
+@app.route('/radio_selection', methods=['POST'])
+def radio_selection():
+    global custom_intent_num
+
+    selected_option = request.form['radioOption']
+    # Perform server-side actions based on which radio button was selected
+    if selected_option == 'option1':
+        custom_intent_num = 1
+    elif selected_option == 'option2':
+        custom_intent_num = 2
+    elif selected_option == 'option3':
+        custom_intent_num = 3
+
+    return jsonify({'result': selected_option})
 
 if __name__ == '__main__':
     app.run(port = PORT, debug=True)

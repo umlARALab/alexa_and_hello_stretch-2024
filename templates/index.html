@@ -3,6 +3,31 @@
 <html>
     <head>
         <title>Amazon Alexa & Hello Stretch Interface</title>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $(".btn-action").click(function(event) {
+                    event.preventDefault();
+                    var buttonId = $(this).attr('id');
+                    $.ajax({
+                        type: 'POST',
+                        url: '/custom_intent',
+                        data: {button_id: buttonId}
+                    });
+                });
+            });
+            $(document).ready(function() {
+                $("input[type='radio']").change(function() {
+                    var selectedOption = $("input[type='radio']:checked").val();
+                    $.ajax({
+                        type: 'POST',
+                        url: '/radio_selection',
+                        data: {radioOption: selectedOption}
+                    });
+                });
+            });
+        </script>
     </head>
     <body>
         <h1>Amazon Alexa & Hello Stretch Interface</h1>
@@ -23,10 +48,39 @@
             </form>
         </div>
         <div id='Custom Intent'>
-            <h2>Make a custom intent</h2>
-            <form action="/alert" method="post">
-                <button type="button" onclick="alert('pressed')">CLICK</button>
+            <h2>Make a custom action</h2>
+            <h4>Which action would you like to create?</h4>
+            <form>
+                <input type="radio" id="option1" name="radioOption" value="option1">
+                <label for="option1">Custom Action 1</label>
+                <input type="radio" id="option2" name="radioOption" value="option2">
+                <label for="option2">Custom Action 2</label>
+                <input type="radio" id="option3" name="radioOption" value="option3">
+                <label for="option3">Custom Action 3</label>
             </form>
+            <div>
+                <button id="base_forward" class="btn-action">Forward</button>
+                <button id="base_backward" class="btn-action">Backwards</button>
+                <button id="base_turn_left" class="btn-action">Turn Left</button>
+                <button id="base_turn_right" class="btn-action">Turn Right</button>
+            </div>
+            <div>
+                <button id="lift_up" class="btn-action">Move Lift Up</button>
+                <button id="lift_down" class="btn-action">Move Lift Down</button>
+                <button id="arm_extend" class="btn-action">Extend Arm</button>
+                <button id="arm_collapse" class="btn-action">Collapse Arm</button>
+            </div>
+            <div>
+                <button id="wrist_left" class="btn-action">Rotate Left</button>
+                <button id="wrist_right" class="btn-action">Rotate Right</button>
+            </div>
+            <div>
+                <button id="gripper_open" class="btn-action">Open Gripper</button>
+                <button id="gripper_close" class="btn-action">Close Gripper</button>
+            </div>
+            <div>
+                <button id="clear" class="btn-action">Clear</button>
+            </div>
         </div>
     </body>
 </html>  
