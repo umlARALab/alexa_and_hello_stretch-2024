@@ -30,7 +30,7 @@ custom_intent_1 = []
 custom_intent_2 = []
 custom_intent_3 = []
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/")
 def homepage():
     global current_intent
     return render_template('index.html', intent = current_intent)
@@ -308,6 +308,23 @@ def choose_intent_handler(handler_input):
     else:
         return handler_input.response_builder.speak("Ok. No action selected.")
 
+@sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
+def user_custom_action_intent_handler(handler_input):
+    global current_intent
+    current_intent = "Hello Stretch Custom Action"
+
+    custom_intent_num = handler_input.request_envelope.request.intent.slots['custom_intent_num'].resolutions.resolutions_per_authority[0].values[0].value.name
+    print(custom_intent_num)
+
+    if custom_intent_num == 1:
+        return handler_input.response_builder.speak("Ok. Running Custom Action 1.")
+    elif custom_intent_num == 2:
+        return handler_input.response_builder.speak("Ok. Running Custom Action 2.")
+    elif custom_intent_num == 3:
+        return handler_input.response_builder.speak("Ok. Running Custom Action 3.")
+    else:
+        return handler_input.response_builder.speak("I'm sorry, there are only three custom actions available.")
+
 skill_response = SkillAdapter(
     skill=sb.create(), skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188", app=app)
 
@@ -317,25 +334,24 @@ skill_response.register(app=app, route="/")
 
 @app.route('/button_click', methods=['POST'])
 def button_click():
-    button_id = request.form
+    global current_intent
 
-    print(button_id.get('name'))
+    button_id = request.form.get('button_id')
 
-    if "scan_room" in button_id:
-        print("scan")
-    if "grab_from_table" in button_id:
-        print("table grab")
-    if "move_to_ground" in button_id:
-        print("move table")
-    if "grab_from_ground" in button_id:
-        print("ground grab")
-    if "stop" in button_id:
-        print("stop")
-    if "stow" in button_id:
-        print("stow")
+    if "scan_room" == button_id:
+        current_intent = "Hello Stretch Scan Room"
+    elif "grab_from_table" == button_id:
+        current_intent = "Hello Stretch Grab From Table"
+    elif "move_to_ground" == button_id:
+        current_intent = "Hello Stretch Move To Table"
+    elif "grab_from_ground" == button_id:
+        current_intent = "Hello Stretch Hand From Ground"
+    elif "stop" == button_id:
+        current_intent = "Hello Stretch Stop"
+    elif "stow" == button_id:
+        current_intent = "Hello Stretch Stow"
 
-    # Here you can perform any server-side actions based on which button was pressed
-    return render_template('button_click.html')
+    return jsonify({'result': button_id})
 
 @app.route('/custom_intent', methods=['POST'])
 def custom_intent():
@@ -369,9 +385,7 @@ def custom_intent():
 
         
         return jsonify({'result': id})
-        
-
-
+ 
 @app.route('/radio_selection', methods=['POST'])
 def radio_selection():
     global custom_intent_num

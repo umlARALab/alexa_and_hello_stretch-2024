@@ -16,8 +16,6 @@
                         data: {button_id: buttonId}
                     });
                 });
-            });
-            $(document).ready(function() {
                 $("input[type='radio']").change(function() {
                     var selectedOption = $("input[type='radio']:checked").val();
                     $.ajax({
@@ -26,28 +24,44 @@
                         data: {radioOption: selectedOption}
                     });
                 });
+                $(".btn-intents").click(function() {
+                    event.preventDefault();
+                    var buttonId = $(this).attr('id');
+                    $.ajax({
+                        type: 'POST',
+                        url: '/button_click',
+                        data: {button_id: buttonId}
+                    });
+                });
+                // window.setInterval(function(){
+                //     $('#CurrentAction').load('/ #CurrentAction');
+                // }, 5000)
+
+                
             });
+            function refreshPage(){
+                console.log("in")
+                location.reload();
+            } 
         </script>
     </head>
     <body>
         <h1>Amazon Alexa & Hello Stretch Interface</h1>
         <h3>Say <i>"Alexa, tell Hello Stretch..."</i> to give your Hello Stretch Robot a command.</h3>
-        <div id='Current Action'>
+        <div id='CurrentAction'>
             <h2>Current Action:</h2>
             <p>{{ intent }}</p>
         </div>
-        <div id='Button Mode'>
+        <div id='ButtonMode'>
             <h2>Action Buttons</h2>
-            <form action="/button_click" method="post">
-                <button type="submit" name="scan_room">Scan Room</button>
-                <button type="submit" name="grab_from_table">Grab From Table</button>
-                <button type="submit" name="move_to_ground">Move To Table</button>
-                <button type="submit" name="grab_from_ground">Grab From Ground</button>
-                <button type="submit" name="stop">Stop</button>
-                <button type="submit" name="stow">Stow</button>
-            </form>
+            <button id="scan_room" class="btn-intents" onClick="refreshPage()">Scan Room</button>
+            <button id="grab_from_table" class="btn-intents" onClick="refreshPage()">Grab From Table</button>
+            <button id="move_to_ground" class="btn-intents" onClick="refreshPage()">Move To Table</button>
+            <button id="grab_from_ground" class="btn-intents" onClick="refreshPage()">Grab From Ground</button>
+            <button id="stop" class="btn-intents" onClick="refreshPage()">Stop</button>
+            <button id="stow" class="btn-intents" onClick="refreshPage()">Stow</button>
         </div>
-        <div id='Custom Intent'>
+        <div id='CustomIntent'>
             <h2>Make a custom action</h2>
             <h4>Which action would you like to create?</h4>
             <form>
