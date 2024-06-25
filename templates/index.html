@@ -11,5 +11,22 @@
             <h2>Current Action:</h2>
             <p>{{ intent }}</p>
         </div>
+        <div id='Button Mode'>
+            <h2>Action Buttons</h2>
+            <form action="/button_click" method="post">
+                <button type="submit" name="scan_room">Scan Room</button>
+                <button type="submit" name="grab_from_table">Grab From Table</button>
+                <button type="submit" name="move_to_ground">Move To Table</button>
+                <button type="submit" name="grab_from_ground">Grab From Ground</button>
+                <button type="submit" name="stop">Stop</button>
+                <button type="submit" name="stow">Stow</button>
+            </form>
+        </div>
+        <div id='Custom Intent'>
+            <h2>Make a custom intent</h2>
+            <form action="/alert" method="post">
+                <button type="button" onclick="alert('pressed')">CLICK</button>
+            </form>
+        </div>
     </body>
 </html>  

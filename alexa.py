@@ -2,6 +2,7 @@ import ngrok
 
 from flask import Flask, render_template
 from flask_ask_sdk.skill_adapter import SkillAdapter
+from flask import request
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler, AbstractExceptionHandler
 from ask_sdk_core.utils import is_request_type, is_intent_name
@@ -25,7 +26,7 @@ sb = SkillBuilder()
 
 current_intent = ""
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def homepage():
     global current_intent
     return render_template('index.html', intent = current_intent)
@@ -307,6 +308,28 @@ skill_response = SkillAdapter(
     skill=sb.create(), skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188", app=app)
 
 skill_response.register(app=app, route="/")
+
+###### Page interactions
+
+@app.route('/button_click', methods=['POST'])
+def button_click():
+    button_id = request.form
+
+    if "scan_room" in button_id:
+        print("scan")
+    if "grab_from_table" in button_id:
+        print("table grab")
+    if "move_to_ground" in button_id:
+        print("move table")
+    if "grab_from_ground" in button_id:
+        print("ground grab")
+    if "stop" in button_id:
+        print("stop")
+    if "stow" in button_id:
+        print("stow")
+
+    # Here you can perform any server-side actions based on which button was pressed
+    return render_template('button_click.html')
 
 if __name__ == '__main__':
     app.run(port = PORT, debug=True)
