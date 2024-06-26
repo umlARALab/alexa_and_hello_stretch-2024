@@ -13,6 +13,13 @@ from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
 # from ask_sdk_core.attributes_manager import AttributesManager
 
+
+# still need to fix custom intent lists ==> maybe make just one for testing???
+# have intent appear on page as user makes it
+# have alexa respond to it
+# then figure out stretch thing!!!!!
+
+
 from objects import *
 # from stretch import *
 
@@ -25,15 +32,20 @@ app = Flask(__name__)
 sb = SkillBuilder()
 
 current_intent = ""
-custom_intent_num = 0
-custom_intent_1 = []
-custom_intent_2 = []
-custom_intent_3 = []
+custom_intent = None
+custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action 3"]]
 
 @app.route("/")
 def homepage():
     global current_intent
-    return render_template('index.html', intent = current_intent)
+    global custom_intent
+
+    custom_text = "Choose a Custom Action to build!"
+
+    if custom_intent is not None:
+        custom_text = ", ".join(custom_intent)
+        
+    return render_template('index.html', intent = current_intent, custom = custom_text)
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
@@ -354,50 +366,41 @@ def button_click():
     return jsonify({'result': button_id})
 
 @app.route('/custom_intent', methods=['POST'])
-def custom_intent():
-    global custom_intent_num, custom_intent_1, custom_intent_2, custom_intent_3
-
-    print("num: " + str(custom_intent_num))
-
-    if custom_intent_num == 1:
-        custom_intent = custom_intent_1
-    elif custom_intent_num == 2:
-        custom_intent = custom_intent_2
-    elif custom_intent_num == 3:
-        custom_intent = custom_intent_3
-    else:
-        custom_intent = None
-        result = "please choose an action"
-        print(result)
-
-        return jsonify({'result': result})
-
-    print(custom_intent)
+def custom_intent_builder():
+    global custom_intent
 
     if custom_intent != None:
         id = request.form.get('button_id')
         print(id)
 
         if id == "clear":
+            name = custom_intent[0]
             custom_intent.clear()
+            custom_intent.append(name)
         else:
             custom_intent.append(id)
 
-        
         return jsonify({'result': id})
+    else:
+        result = "please choose an action"
+        print(result)
+
+        return jsonify({'result': result})
+    
+   
  
 @app.route('/radio_selection', methods=['POST'])
 def radio_selection():
-    global custom_intent_num
+    global custom_intent, custom_intent_array
 
     selected_option = request.form['radioOption']
     # Perform server-side actions based on which radio button was selected
     if selected_option == 'option1':
-        custom_intent_num = 1
+        custom_intent = custom_intent_array[0]
     elif selected_option == 'option2':
-        custom_intent_num = 2
+        custom_intent = custom_intent_array[1]
     elif selected_option == 'option3':
-        custom_intent_num = 3
+        custom_intent = custom_intent_array[2]
 
     return jsonify({'result': selected_option})
 

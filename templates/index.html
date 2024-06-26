@@ -73,27 +73,30 @@
                 <label for="option3">Custom Action 3</label>
             </form>
             <div>
-                <button id="base_forward" class="btn-action">Forward</button>
-                <button id="base_backward" class="btn-action">Backwards</button>
-                <button id="base_turn_left" class="btn-action">Turn Left</button>
-                <button id="base_turn_right" class="btn-action">Turn Right</button>
+                <button id="Base Forward" class="btn-action" onClick="refreshPage()">Forward</button>
+                <button id="Base Backwards" class="btn-action" onClick="refreshPage()">Backwards</button>
+                <button id="Turn Left" class="btn-action" onClick="refreshPage()">Turn Left</button>
+                <button id="Turn Right" class="btn-action" onClick="refreshPage()">Turn Right</button>
             </div>
             <div>
-                <button id="lift_up" class="btn-action">Move Lift Up</button>
-                <button id="lift_down" class="btn-action">Move Lift Down</button>
-                <button id="arm_extend" class="btn-action">Extend Arm</button>
-                <button id="arm_collapse" class="btn-action">Collapse Arm</button>
+                <button id="Move Lift Up" class="btn-action" onClick="refreshPage()">Move Lift Up</button>
+                <button id="Move Lift Down" class="btn-action" onClick="refreshPage()">Move Lift Down</button>
+                <button id="Extend Arm" class="btn-action" onClick="refreshPage()">Extend Arm</button>
+                <button id="Collapse Arm" class="btn-action" onClick="refreshPage()">Collapse Arm</button>
             </div>
             <div>
-                <button id="wrist_left" class="btn-action">Rotate Left</button>
-                <button id="wrist_right" class="btn-action">Rotate Right</button>
+                <button id="Rotate Wrist Left" class="btn-action" onClick="refreshPage()">Rotate Wrist Left</button>
+                <button id="Rotate Wrist Right" class="btn-action" onClick="refreshPage()">Rotate Wrist Right</button>
             </div>
             <div>
-                <button id="gripper_open" class="btn-action">Open Gripper</button>
-                <button id="gripper_close" class="btn-action">Close Gripper</button>
+                <button id="Open Gripper" class="btn-action" onClick="refreshPage()">Open Gripper</button>
+                <button id="Close Gripper" class="btn-action" onClick="refreshPage()">Close Gripper</button>
             </div>
             <div>
-                <button id="clear" class="btn-action">Clear</button>
+                <button id="clear" class="btn-action" onClick="refreshPage()">Clear</button>
+            </div>
+            <div id="Custom">
+                <p>{{ custom}}</p>
             </div>
         </div>
     </body>
