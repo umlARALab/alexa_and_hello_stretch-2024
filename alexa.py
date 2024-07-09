@@ -11,7 +11,15 @@ from ask_sdk_model.dialog import (ElicitSlotDirective, DelegateDirective)
 from ask_sdk_model import (Response, IntentRequest, DialogState, SlotConfirmationStatus, Slot, ui, IntentConfirmationStatus)
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
+
+from util import Intents
 # from ask_sdk_core.attributes_manager import AttributesManager
+
+# import rclpy
+# from rclpy.node import Node 
+# from rclpy.action import ActionClient
+
+# action_client = ActionClient(Node("alexa_interface"))
 
 
 # still need to fix custom intent lists ==> maybe make just one for testing???
@@ -32,20 +40,22 @@ app = Flask(__name__)
 sb = SkillBuilder()
 
 current_intent = ""
+current_movement = ""
 custom_intent = None
 custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action 3"]]
 
 @app.route("/")
 def homepage():
-    global current_intent
-    global custom_intent
+    global current_intent, custom_intent, current_movement
 
     custom_text = "Choose a Custom Action to build!"
+
+    print(current_movement)
 
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
         
-    return render_template('index.html', intent = current_intent, custom = custom_text)
+    return render_template('index.html', intent = current_intent, movements = current_movement, custom = custom_text)
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
@@ -130,8 +140,8 @@ def all_exception_handler(handler_input, exception):
 
 @sb.request_handler(can_handle_func=is_intent_name("ScanRoom"))
 def scan_room_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Scan Room"
+
+    set_intent_info(Intents.SCAN_ROOM)
 
     # type: (HandlerInput) -> Response
     speech_text = "Scanning the room!"
@@ -143,8 +153,10 @@ def scan_room_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("GrabFromTable"))
 def grab_from_table_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Grab From Table"
+
+    set_intent_info(Intents.GRAB_FROM_GROUND)
+
+    print(current_movement)
 
     # type: (HandlerInput) -> Response
     speech_text = "Grab from table!"
@@ -156,8 +168,8 @@ def grab_from_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("MoveToTable"))
 def move_to_table_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Move To Table"
+
+    set_intent_info(Intents.MOVE_TO_TABLE)
 
     table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].value
 
@@ -213,8 +225,8 @@ def choose_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("HandFromGround"))
 def hand_from_ground_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Hand From Ground"
+    
+    set_intent_info(Intents.GRAB_FROM_GROUND)
 
     if num_objects == 1:
         speech_text = "Grabbing the object."
@@ -251,8 +263,7 @@ def choose_object_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("StopRobotIntent"))
 def stop_robot_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Stop"
+    set_intent_info(Intents.STOP)
 
     # type: (HandlerInput) -> Response
     
@@ -264,8 +275,7 @@ def stop_robot_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("StowIntent"))
 def stow_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Stow"
+    set_intent_info(Intents.STOW)
 
     # type: (HandlerInput) -> Response
     
@@ -322,20 +332,28 @@ def choose_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
 def user_custom_action_intent_handler(handler_input):
-    global current_intent
-    current_intent = "Hello Stretch Custom Action"
+    # global current_intent, custom_intent
 
-    custom_intent_num = handler_input.request_envelope.request.intent.slots['custom_intent_num'].resolutions.resolutions_per_authority[0].values[0].value.name
-    print(custom_intent_num)
+    # custom_intent_num = handler_input.request_envelope.request.intent.slots['custom_intent_num']
+    # print(custom_intent_num)
+    speech = "I'm sorry, there are only three custom actions available."
 
-    if custom_intent_num == 1:
-        return handler_input.response_builder.speak("Ok. Running Custom Action 1.")
-    elif custom_intent_num == 2:
-        return handler_input.response_builder.speak("Ok. Running Custom Action 2.")
-    elif custom_intent_num == 3:
-        return handler_input.response_builder.speak("Ok. Running Custom Action 3.")
-    else:
-        return handler_input.response_builder.speak("I'm sorry, there are only three custom actions available.")
+    # if custom_intent is not None:
+    #     custom_intent_num = custom_intent_num.resolutions.resolutions_per_authority[0].values[0].value.name
+    #     print(custom_intent_num)
+
+    #     current_intent = "Hello Stretch " + custom_intent_array[custom_intent_num][0]
+
+    #     if custom_intent_num == 1:
+    #         speech = "Ok. Running Custom Action 1."
+    #     elif custom_intent_num == 2:
+    #         speech = "Ok. Running Custom Action 2."
+    #     elif custom_intent_num == 3:
+    #         speech = "Ok. Running Custom Action 3."
+    #     else:
+    #         speech = "I'm sorry, there are only three custom actions available."
+
+    return handler_input.response_builder.speak(speech).response
 
 skill_response = SkillAdapter(
     skill=sb.create(), skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188", app=app)
@@ -346,22 +364,22 @@ skill_response.register(app=app, route="/")
 
 @app.route('/button_click', methods=['POST'])
 def button_click():
-    global current_intent
+    global current_intent, current_movement
 
     button_id = request.form.get('button_id')
 
     if "scan_room" == button_id:
-        current_intent = "Hello Stretch Scan Room"
+        set_intent_info(Intents.SCAN_ROOM)
     elif "grab_from_table" == button_id:
-        current_intent = "Hello Stretch Grab From Table"
-    elif "move_to_ground" == button_id:
-        current_intent = "Hello Stretch Move To Table"
+        set_intent_info(Intents.REACH_TABLE)
+    elif "move_to_table" == button_id:
+        set_intent_info(Intents.MOVE_TO_TABLE)
     elif "grab_from_ground" == button_id:
-        current_intent = "Hello Stretch Hand From Ground"
+        set_intent_info(Intents.GRAB_FROM_GROUND)
     elif "stop" == button_id:
-        current_intent = "Hello Stretch Stop"
+        set_intent_info(Intents.STOP)
     elif "stow" == button_id:
-        current_intent = "Hello Stretch Stow"
+        set_intent_info(Intents.STOW)
 
     return jsonify({'result': button_id})
 
@@ -403,6 +421,26 @@ def radio_selection():
         custom_intent = custom_intent_array[2]
 
     return jsonify({'result': selected_option})
+
+def set_intent_info(intent_num):
+    global current_intent, current_movement
+
+    if intent_num == Intents.STOP:
+        current_intent = "Hello Stretch Stop"
+    elif intent_num == Intents.STOW:
+        current_intent = "Hello Stretch Stow"
+    elif intent_num == Intents.SCAN_ROOM:
+        current_intent = "Hello Stretch Scan Room"
+        current_movement = "Rotates the wrist left or right to make a full circle"
+    elif intent_num == Intents.REACH_TABLE:
+        current_intent = "Hello Stretch Grab From Table"
+        current_movement = "Move up, extend arm, rotate wrist, and close gripper"
+    elif intent_num == Intents.MOVE_TO_TABLE:
+        current_intent = "Hello Stretch Move To Table"
+        current_movement = "Rotate the base, move forward, lift up, and rotate wrist"
+    elif intent_num == Intents.GRAB_FROM_GROUND:
+        current_intent = "Hello Stretch Hand From Ground"
+        current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
 
 if __name__ == '__main__':
     app.run(port = PORT, debug=True)

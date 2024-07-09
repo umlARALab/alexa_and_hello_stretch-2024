@@ -47,6 +47,8 @@ def scan_room():
     r.head.move_by('head_pan', -4.1, 0.2)
     r.push_command()
 
+# rotate the wrist left 12 times
+
 def reach_table():
 
     # set up arm and lift
@@ -61,6 +63,8 @@ def reach_table():
     r.end_of_arm.move_to('wrist_pitch', -1.5) # point down
     r.end_of_arm.move_to('stretch_gripper', 50) # i think has range of -50 (closed) to 50 (open)
     r.push_command()
+
+# move up, extend, rotate wrist, close gripper
 
 def move_to_table(angle, dist):
 
@@ -85,6 +89,8 @@ def move_to_table(angle, dist):
     r.push_command()
 
     reach_table()
+
+    # rotate base, move forward, life arm, rotate wrist
     
 def grab_from_ground(angle, dist):
     ARM_OUT_LEN = .2
@@ -131,3 +137,5 @@ def grab_from_ground(angle, dist):
     r.base.translate_by(return_dist)
     r.lift.move_to(TABLE_HEIGHT)
     r.base.push_command()
+
+    # rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, move forward

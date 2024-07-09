@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Intent(Enum):
+class Intents(Enum):
     STOP = 1
     STOW = 2
     SCAN_ROOM = 3

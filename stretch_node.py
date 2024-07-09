@@ -1,21 +1,15 @@
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
-from rclpy.duration import Duration
 from rclpy.action import ActionClient
-import sys
-from control_msgs.action import FollowJointTrajectory
-from trajectory_msgs.msg import JointTrajectoryPoint
-from sensor_msgs.msg import JointState
 
-import stretch_body.robot as r
-from stretch_body import robot_params
-from stretch_body import hello_utils as hu
-import time
-import math
+from std_msgs.msg import String
+
 import util
-from util import Intent
+from util import Intents
 
-class AlexCommands(Node):
+class AlexaCommands(Node):
     #### Constants
 
     # lift height constants
@@ -35,41 +29,25 @@ class AlexCommands(Node):
     # table lengths
     ARM_OUT_TO_TABLE_LEN = .3
 
-
-    # setup and start stretch
-    #r = stretch_body.robot.Robot()
-    r.startup()
-
-    if not r.startup():
-        exit() # failed to start robot!
-
-    # home the joints to find zero, if necessary
-    if not r.is_calibrated():
-        r.home()
-
     def __init__(self):
-        super().__init__('stretch_alexa_commands')
-        self.joint_state = JointState()
-        self.trajectory_client = ActionClient(self, FollowJointTrajectory, '/stretch_controller/follow_joint_trajectory')
-        server_reached = self.trajectory_client.wait_for_server(timeout_sec=60.0)
-        if not server_reached:
-            self.get_logger().error('Unable to connect to arm action server. Timeout exceeded.')
-            sys.exit()
-        self.subscription = self.create_subscription(JointState, '/stretch/joint_states', self.joint_states_callback, 1)
-        self.subscription
+        super().__init__('stretch_alexa_commands_node')
+        self.publisher_ = self.create_publisher(String, 'alexa_cmd', 10)
+
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.move_around)
 
     def issue_alexa_command(self, intent):
-        if intent == Intent.STOP:
+        if intent == Intents.STOP:
             self.stop()
-        if intent == Intent.STOW:
+        if intent == Intents.STOW:
             self.stow()
-        if intent == Intent.SCAN_ROOM:
+        if intent == Intents.SCAN_ROOM:
             self.scan_room()
-        if intent == Intent.REACH_TABLE:
+        if intent == Intents.REACH_TABLE:
             self.reach_table
-        if intent == Intent.MOVE_TO_TABLE:
+        if intent == Intents.MOVE_TO_TABLE:
             self.get_table()
-        if intent == Intent.GRAB_FROM_GROUND:
+        if intent == Intents.GRAB_FROM_GROUND:
             self.get_object()
 
     def stop():
@@ -184,11 +162,7 @@ class AlexCommands(Node):
 
 def main(args=[]):
     rclpy.init(args=args)
-
     alexa_commands = AlexaCommands()
-
-    rclpy.spin_once(alexa_commands)
-    alexa_commands.issue_alexa_command(args.intent)
     rclpy.spin(alexa_commands)
     alexa_commands.destroy_node()
     rclpy.shutdown()
