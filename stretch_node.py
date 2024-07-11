@@ -9,6 +9,8 @@ from std_msgs.msg import String
 import util
 from util import Intents
 
+# look at stretch driver node --> i think need to pub to that
+
 class AlexaCommands(Node):
     #### Constants
 
