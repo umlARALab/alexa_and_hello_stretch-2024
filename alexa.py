@@ -1,4 +1,4 @@
-import ngrok
+#!/usr/bin/env python
 
 from flask import Flask, render_template, jsonify
 from flask_ask_sdk.skill_adapter import SkillAdapter
@@ -12,22 +12,13 @@ from ask_sdk_model import (Response, IntentRequest, DialogState, SlotConfirmatio
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
 
+import rclpy
+from rclpy.node import Node
+import threading
+import rclpy.publisher
+from std_msgs.msg import String
+
 from util import Intents
-# from ask_sdk_core.attributes_manager import AttributesManager
-
-# import rclpy
-# from rclpy.node import Node 
-# from rclpy.action import ActionClient
-
-# action_client = ActionClient(Node("alexa_interface"))
-
-
-# still need to fix custom intent lists ==> maybe make just one for testing???
-# have intent appear on page as user makes it
-# have alexa respond to it
-# then figure out stretch thing!!!!!
-
-
 from objects import *
 # from stretch import *
 
@@ -36,6 +27,8 @@ PORT = 9999
 # python alexa.py
 
 app = Flask(__name__)
+
+node_data = {'intent': 'No intent yet'}
 
 sb = SkillBuilder()
 
@@ -46,11 +39,12 @@ custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action
 
 @app.route("/")
 def homepage():
-    global current_intent, custom_intent, current_movement
+    global current_intent, custom_intent, current_movement, node_data
 
     custom_text = "Choose a Custom Action to build!"
 
-    print(current_movement)
+    text = 'hello world'
+    node_data['intent'] = text
 
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
@@ -423,24 +417,59 @@ def radio_selection():
     return jsonify({'result': selected_option})
 
 def set_intent_info(intent_num):
-    global current_intent, current_movement
+    global current_intent, current_movement, node_data
 
     if intent_num == Intents.STOP:
-        current_intent = "Hello Stretch Stop"
+        intent_name = "Hello Stretch Stop"
     elif intent_num == Intents.STOW:
-        current_intent = "Hello Stretch Stow"
+        intent_name = "Hello Stretch Stow"
     elif intent_num == Intents.SCAN_ROOM:
-        current_intent = "Hello Stretch Scan Room"
+        intent_name = "Hello Stretch Scan Room"
         current_movement = "Rotates the wrist left or right to make a full circle"
     elif intent_num == Intents.REACH_TABLE:
-        current_intent = "Hello Stretch Grab From Table"
+        intent_name = "Hello Stretch Grab From Table"
         current_movement = "Move up, extend arm, rotate wrist, and close gripper"
     elif intent_num == Intents.MOVE_TO_TABLE:
-        current_intent = "Hello Stretch Move To Table"
+        intent_name = "Hello Stretch Move To Table"
         current_movement = "Rotate the base, move forward, lift up, and rotate wrist"
     elif intent_num == Intents.GRAB_FROM_GROUND:
-        current_intent = "Hello Stretch Hand From Ground"
+        intent_name = "Hello Stretch Hand From Ground"
         current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
+    
+    current_intent = intent_name
+    node_data['intent'] = intent_name
+
+#### ros2 node ####
+class WebPageNode(Node):
+    def __init__(self):
+        super().__init__('web_page_node')
+        self.publisher = self.create_publisher(String, 'selected_intent_topic', 10)
+        self.get_logger().info('Initialized')
+        self.create_timer(1.0, self.publish_message)
+
+    def publish_message(self):
+        global node_data
+        msg = String()
+        msg.data = node_data['intent']
+        self.publisher.publish(msg)
+        self.get_logger().info(f'Publishing: {msg.data}')
+
+def run_ros2_node():
+     rclpy.init()
+     node = WebPageNode()
+     rclpy.spin(node)
+     node.destory_node()
+     rclpy.shutdown()
+
+def run_flask_server():
+     print("running flask")
+     app.run(port = PORT)
+
+def main():
+     flask_thread = threading.Thread(target=run_flask_server)
+     flask_thread.start()
+
+     run_ros2_node()
 
 if __name__ == '__main__':
-    app.run(port = PORT, debug=True)
+    main()
