@@ -1,48 +1,51 @@
-#!/usr/bin/env python3
-
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionClient
 
 from std_msgs.msg import String
 
 import util
 from util import Intents
+import time
+import math
 
-# look at stretch driver node --> i think need to pub to that
+import stretch_body
+import stretch_body.robot
+
+## have alexa commands node just recieve the intent name and then leave the rest for now, make more groupings
 
 class AlexaCommands(Node):
     #### Constants
 
-    # lift height constants
-    TABLE_HEIGHT = 1.1 # avg table height + length of gripper (also max height by chance)
-    LIFT_MID_HEIGHT = .55  
-    GROUND_REACH_HEIGHT = 0.2 
-
-    # velocity constants
-    BASE_TRANS_VEL = .05
-    BASE_ROT_VEL = 0.1
-    BASE_STOP_VEL = 0
-
-    # stretch robot dimensions
-    BASE_LENGTH = .34
-    BASE_WIDTH = .33
-
-    # table lengths
-    ARM_OUT_TO_TABLE_LEN = .3
-
     def __init__(self):
         super().__init__('stretch_alexa_commands_node')
-        self.publisher_ = self.create_publisher(String, 'alexa_cmd', 10)
 
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.move_around)
+        #start_publish?
+
+        # self.robot = StretchBody()
+        # self.robot.start_publish()
+        
+
+        self.subscribtion = self.create_subscription(
+            String,
+            'selected_intent_topic',
+            self.listener_callback,
+            10)
+        self.subscribtion
+
+        self.robot = stretch_body.robot.Robot()
+        self.robot.start()
+
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        self.issue_alexa_command(msg.data)
+
 
     def issue_alexa_command(self, intent):
+        # self.publish_message
         if intent == Intents.STOP:
-            self.stop()
+            self.robot.stop()
         if intent == Intents.STOW:
-            self.stow()
+            self.robot.stow()
         if intent == Intents.SCAN_ROOM:
             self.scan_room()
         if intent == Intents.REACH_TABLE:
@@ -52,33 +55,27 @@ class AlexaCommands(Node):
         if intent == Intents.GRAB_FROM_GROUND:
             self.get_object()
 
-    def stop():
-        r.stop()
-
-    def stow():
-        r.stow()
-
-    def scan_room():
-        r.head.move_to('head_pan', 1.77)
-        r.push_command()
+    def scan_room(self):
+        self.robot.head.move_to('head_pan', 1.77)
+        self.robot.push_command()
         time.sleep(.5)
-        r.head.move_by('head_pan', -4.1, 0.2)
-        r.push_command()
+        self.robot.head.move_by('head_pan', -4.1, 0.2)
+        self.robot.push_command()
 
-    def reach_table():
+    def reach_table(self):
 
         # set up arm and lift
         # r.head.move_to('head_pan', math.pi / -2)
-        r.lift.move_to(TABLE_HEIGHT)
-        r.arm.move_to(ARM_OUT_TO_TABLE_LEN)
-        r.lift.motor.wait_until_at_setpoint()
-        r.arm.motor.wait_until_at_setpoint()
-        r.push_command()
+        self.robot.lift.move_to(util.TABLE_HEIGHT)
+        self.robot.arm.move_to(util.ARM_OUT_TO_TABLE_LEN)
+        self.robot.lift.motor.wait_until_at_setpoint()
+        self.robot.arm.motor.wait_until_at_setpoint()
+        self.robot.push_command()
 
         # tilt wrist and open gripper
-        r.end_of_arm.move_to('wrist_pitch', -1.5) # point down
-        r.end_of_arm.move_to('stretch_gripper', 50) # i think has range of -50 (closed) to 50 (open)
-        r.push_command()
+        self.robot.end_of_arm.move_to('wrist_pitch', -1.5) # point down
+        self.robot.end_of_arm.move_to('stretch_gripper', 50) # i think has range of -50 (closed) to 50 (open)
+        self.robot.push_command()
 
     def get_table(self):
         # something w/ cameras
@@ -88,25 +85,25 @@ class AlexaCommands(Node):
 
     def move_to_table(self, angle, dist):
 
-        move_time = BASE_TRANS_VEL / dist
-        dist = dist - ARM_OUT_TO_TABLE_LEN
+        move_time = util.BASE_TRANS_VEL / dist
+        dist = dist - util.ARM_OUT_TO_TABLE_LEN
 
-        r.stow()
-        r.push_command()
+        self.robot.stow()
+        self.robot.push_command()
 
         # move to table
-        r.base.rotate_by(angle, BASE_TRANS_VEL)
-        r.base.left_wheel.wait_until_at_setpoint()
-        r.base.translate_by(dist, BASE_ROT_VEL)
-        r.base.push_command()
+        self.robot.base.rotate_by(angle, util.BASE_TRANS_VEL)
+        self.robot.base.left_wheel.wait_until_at_setpoint()
+        self.robot.base.translate_by(dist, util.BASE_ROT_VEL)
+        self.robot.base.push_command()
         time.sleep(move_time)
 
         # set arm and gripper
-        r.arm.move_to(0)
-        r.lift.move_to(TABLE_HEIGHT)
-        r.end_of_arm.move_to('stretch_gripper', 0)
-        r.end_of_arm.move_to('wrist_pitch', 0)
-        r.push_command()
+        self.robot.arm.move_to(0)
+        self.robot.lift.move_to(util.TABLE_HEIGHT)
+        self.robot.end_of_arm.move_to('stretch_gripper', 0)
+        self.robot.end_of_arm.move_to('wrist_pitch', 0)
+        self.robot.push_command()
 
         self.reach_table()
 
@@ -120,47 +117,47 @@ class AlexaCommands(Node):
         ARM_OUT_LEN = .2
 
         dist = dist - ARM_OUT_LEN
-        move_time = BASE_TRANS_VEL / dist
+        move_time = util.BASE_TRANS_VEL / dist
 
         return_angle = math.pi - angle
         return_dist = dist * -1
 
-        r.stow()
-        r.push_command()
+        self.robot.stow()
+        self.robot.push_command()
 
         # move to object
-        r.base.rotate_by(angle, BASE_ROT_VEL)
-        r.base.left_wheel.wait_until_at_setpoint()
-        r.base.translate_by(dist, BASE_TRANS_VEL)
-        r.base.push_command()
+        self.robot.base.rotate_by(angle, util.BASE_ROT_VEL)
+        self.robot.base.left_wheel.wait_until_at_setpoint()
+        self.robot.base.translate_by(dist, util.BASE_TRANS_VEL)
+        self.robot.base.push_command()
         time.sleep(move_time)
 
         # set up for grab
-        r.head.pose('wheels')
-        r.arm.move_to(ARM_OUT_LEN)
-        r.end_of_arm.move_to('wrist_pitch', -1.5)
-        r.end_of_arm.move_to('stretch_gripper', 50) # how to open it wider??
-        r.push_command()
+        self.robot.head.pose('wheels')
+        self.robot.arm.move_to(util.ARM_OUT_LEN)
+        self.robot.end_of_arm.move_to('wrist_pitch', -1.5)
+        self.robot.end_of_arm.move_to('stretch_gripper', 50) # how to open it wider??
+        self.robot.push_command()
         time.sleep(1)
-        r.lift.move_to(GROUND_REACH_HEIGHT)
-        r.lift.motor.wait_until_at_setpoint()
-        r.push_command()
+        self.robot.lift.move_to(util.GROUND_REACH_HEIGHT)
+        self.robot.lift.motor.wait_until_at_setpoint()
+        self.robot.push_command()
 
         # pick up object
-        r.end_of_arm.move_to('stretch_gripper', -50)
+        self.robot.end_of_arm.move_to('stretch_gripper', -50)
         time.sleep(.5)
-        r.lift.move_to(LIFT_MID_HEIGHT)
-        r.base.push_command()
+        self.robot.lift.move_to(util.LIFT_MID_HEIGHT)
+        self.robot.base.push_command()
         time.sleep(1)
 
-        r.stow()
-        r.push_command()
+        self.robot.stow()
+        self.robot.push_command()
 
         # go back to start pos
-        r.base.rotate_by(return_angle)
-        r.base.translate_by(return_dist)
-        r.lift.move_to(self.TABLE_HEIGHT)
-        r.base.push_command()
+        self.robot.base.rotate_by(return_angle)
+        self.robot.base.translate_by(return_dist)
+        self.robot.lift.move_to(util.TABLE_HEIGHT)
+        self.robot.base.push_command()
 
 def main(args=[]):
     rclpy.init(args=args)
@@ -168,6 +165,7 @@ def main(args=[]):
     rclpy.spin(alexa_commands)
     alexa_commands.destroy_node()
     rclpy.shutdown()
+    self.robot.stop()
 
 if __name__ == '__main__':
     main()
