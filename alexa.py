@@ -374,6 +374,8 @@ def button_click():
         set_intent_info(Intents.STOP)
     elif "stow" == button_id:
         set_intent_info(Intents.STOW)
+    elif "small_move_test" == button_id:
+        set_intent_info(Intents.TEST_LIFT_SMALL)
 
     return jsonify({'result': button_id})
 
@@ -437,7 +439,7 @@ def set_intent_info(intent_num):
         current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
     
     current_intent = intent_name
-    node_data['intent'] = intent_name
+    node_data['intent'] = intent_num
 
 #### ros2 node ####
 class WebPageNode(Node):

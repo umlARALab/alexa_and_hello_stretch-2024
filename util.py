@@ -7,6 +7,7 @@ class Intents(Enum):
     REACH_TABLE = 4
     MOVE_TO_TABLE = 5
     GRAB_FROM_GROUND = 6
+    TEST_LIFT_SMALL = 7
 
 
 BASE_LENGTH = .34

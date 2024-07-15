@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
 
 import util
 from util import Intents
@@ -9,21 +10,13 @@ import time
 import math
 
 import stretch_body
-import stretch_body.robot
-
-## have alexa commands node just recieve the intent name and then leave the rest for now, make more groupings
+import stretch_body.robot as rb
 
 class AlexaCommands(Node):
     #### Constants
 
     def __init__(self):
         super().__init__('stretch_alexa_commands_node')
-
-        #start_publish?
-
-        # self.robot = StretchBody()
-        # self.robot.start_publish()
-        
 
         self.subscribtion = self.create_subscription(
             String,
@@ -32,13 +25,12 @@ class AlexaCommands(Node):
             10)
         self.subscribtion
 
-        self.robot = stretch_body.robot.Robot()
+        self.robot = rb.Robot()
         self.robot.start()
 
     def listener_callback(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
         self.issue_alexa_command(msg.data)
-
 
     def issue_alexa_command(self, intent):
         # self.publish_message
@@ -54,6 +46,14 @@ class AlexaCommands(Node):
             self.get_table()
         if intent == Intents.GRAB_FROM_GROUND:
             self.get_object()
+        if intent == Intents.TEST_LIFT_SMALL:
+            self.move_lift_small()
+
+        self.robot.stop()
+
+    def move_lift_small(self):
+        self.robot.lift.move_to(1)
+        self.robot.push_command()
 
     def scan_room(self):
         self.robot.head.move_to('head_pan', 1.77)
@@ -76,12 +76,6 @@ class AlexaCommands(Node):
         self.robot.end_of_arm.move_to('wrist_pitch', -1.5) # point down
         self.robot.end_of_arm.move_to('stretch_gripper', 50) # i think has range of -50 (closed) to 50 (open)
         self.robot.push_command()
-
-    def get_table(self):
-        # something w/ cameras
-        angle = 1
-        dist = 1
-        self.move_to_table(angle, dist)
 
     def move_to_table(self, angle, dist):
 
@@ -149,7 +143,6 @@ class AlexaCommands(Node):
         self.robot.lift.move_to(util.LIFT_MID_HEIGHT)
         self.robot.base.push_command()
         time.sleep(1)
-
         self.robot.stow()
         self.robot.push_command()
 
@@ -165,7 +158,7 @@ def main(args=[]):
     rclpy.spin(alexa_commands)
     alexa_commands.destroy_node()
     rclpy.shutdown()
-    self.robot.stop()
+    
 
 if __name__ == '__main__':
     main()
