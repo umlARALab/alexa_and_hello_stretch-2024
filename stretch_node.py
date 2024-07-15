@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import String
+from std_msgs.msg import Int32
 from std_srvs.srv import Trigger
 
 import util
@@ -9,8 +9,10 @@ from util import Intents
 import time
 import math
 
-import stretch_body
-import stretch_body.robot as rb
+# import stretch_body
+# import stretch_body.robot as rb
+
+# source /opt/ros/humble/setup.bash
 
 class AlexaCommands(Node):
     #### Constants
@@ -19,37 +21,47 @@ class AlexaCommands(Node):
         super().__init__('stretch_alexa_commands_node')
 
         self.subscribtion = self.create_subscription(
-            String,
+            Int32,
             'selected_intent_topic',
             self.listener_callback,
             10)
         self.subscribtion
 
-        self.robot = rb.Robot()
-        self.robot.start()
+        #self.robot = rb.Robot()
+        #self.robot.start()
 
     def listener_callback(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg.data)
-        self.issue_alexa_command(msg.data)
+        # self.get_logger().info('I heard: "%s"' % msg.data)
+        num = int(f"{msg.data}")
+        self.issue_alexa_command(num)
 
     def issue_alexa_command(self, intent):
-        # self.publish_message
-        if intent == Intents.STOP:
-            self.robot.stop()
-        if intent == Intents.STOW:
-            self.robot.stow()
-        if intent == Intents.SCAN_ROOM:
-            self.scan_room()
-        if intent == Intents.REACH_TABLE:
-            self.reach_table
-        if intent == Intents.MOVE_TO_TABLE:
-            self.get_table()
-        if intent == Intents.GRAB_FROM_GROUND:
-            self.get_object()
-        if intent == Intents.TEST_LIFT_SMALL:
-            self.move_lift_small()
 
-        self.robot.stop()
+        print(intent)
+        # self.publish_message
+        if intent == Intents.STOP.value:
+            self.get_logger().info('stop')
+            #self.robot.stop()
+        if intent == Intents.STOW.value:
+            self.get_logger().info('stow')
+            #self.robot.stow()
+        if intent == Intents.SCAN_ROOM.value:
+            self.get_logger().info('scan')
+            #self.scan_room()
+        if intent == Intents.REACH_TABLE.value:
+            self.get_logger().info('reach')
+            #self.reach_table
+        if intent == Intents.MOVE_TO_TABLE.value:
+            self.get_logger().info('table')
+            #self.get_table()
+        if intent == Intents.GRAB_FROM_GROUND.value:
+            self.get_logger().info('obj')
+            #self.get_object()
+        if intent == Intents.TEST_LIFT_SMALL.value:
+            self.get_logger().info('small')
+            #self.move_lift_small()
+
+        # self.robot.stop()
 
     def move_lift_small(self):
         self.robot.lift.move_to(1)
