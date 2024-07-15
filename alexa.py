@@ -16,7 +16,7 @@ import rclpy
 from rclpy.node import Node
 import threading
 import rclpy.publisher
-from std_msgs.msg import String
+from std_msgs.msg import Int32
 
 from util import Intents
 from objects import *
@@ -30,7 +30,7 @@ PORT = 9999
 
 app = Flask(__name__)
 
-node_data = {'intent': 'No intent yet'}
+node_data = {'intent': 0}
 
 sb = SkillBuilder()
 
@@ -44,9 +44,6 @@ def homepage():
     global current_intent, custom_intent, current_movement, node_data
 
     custom_text = "Choose a Custom Action to build!"
-
-    text = 'hello world'
-    node_data['intent'] = text
 
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
@@ -439,21 +436,24 @@ def set_intent_info(intent_num):
     elif intent_num == Intents.GRAB_FROM_GROUND:
         intent_name = "Hello Stretch Hand From Ground"
         current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
+    elif intent_num == Intents.TEST_LIFT_SMALL:
+        intent_name = "testing"
     
     current_intent = intent_name
-    node_data['intent'] = intent_num
+    node_data['intent'] = intent_num.value
+    print(node_data['intent'])
 
 #### ros2 node ####
 class WebPageNode(Node):
     def __init__(self):
         super().__init__('web_page_node')
-        self.publisher = self.create_publisher(String, 'selected_intent_topic', 10)
+        self.publisher = self.create_publisher(Int32, 'selected_intent_topic', 10)
         self.get_logger().info('Initialized')
         self.create_timer(1.0, self.publish_message)
 
     def publish_message(self):
         global node_data
-        msg = String()
+        msg = Int32()
         msg.data = node_data['intent']
         self.publisher.publish(msg)
         self.get_logger().info(f'Publishing: {msg.data}')
