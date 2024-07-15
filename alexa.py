@@ -20,9 +20,11 @@ from std_msgs.msg import String
 
 from util import Intents
 from objects import *
-# from stretch import *
 
+# port for local hosting
 PORT = 9999
+
+#### run these commands in two terminals to start hosting
 # ngrok http 9999 to start
 # python alexa.py
 
