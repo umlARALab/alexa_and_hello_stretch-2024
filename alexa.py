@@ -19,7 +19,6 @@ import rclpy.publisher
 from std_msgs.msg import Int32
 
 from util import Intents
-from objects import *
 
 # port for local hosting
 PORT = 9999
