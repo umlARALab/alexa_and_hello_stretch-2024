@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from flask import Flask, render_template, jsonify
 from flask_ask_sdk.skill_adapter import SkillAdapter
@@ -18,7 +18,7 @@ import threading
 import rclpy.publisher
 from std_msgs.msg import Int32
 
-from util import Intents
+from alexa_and_stretch.util import Intents
 
 # port for local hosting
 PORT = 9999
@@ -29,7 +29,7 @@ PORT = 9999
 
 app = Flask(__name__)
 
-node_data = {'intent': 0}
+node_data = {'intent': 1111}
 
 sb = SkillBuilder()
 
@@ -47,7 +47,8 @@ def homepage():
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
         
-    return render_template('index.html', intent = current_intent, movements = current_movement, custom = custom_text)
+    # need to fix return
+    return render_template('alexa_and_stretch.templates/index.html', intent = current_intent, movements = current_movement, custom = custom_text)
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
@@ -133,7 +134,8 @@ def all_exception_handler(handler_input, exception):
 @sb.request_handler(can_handle_func=is_intent_name("ScanRoom"))
 def scan_room_intent_handler(handler_input):
 
-    set_intent_info(Intents.SCAN_ROOM)
+    # set_intent_info(Intents.SCAN_ROOM)
+    set_intent_info(Intents.TEST_LIFT_SMALL)
 
     # type: (HandlerInput) -> Response
     speech_text = "Scanning the room!"
@@ -160,7 +162,7 @@ def grab_from_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("MoveToTable"))
 def move_to_table_intent_handler(handler_input):
-
+    num_tables = 3
     set_intent_info(Intents.MOVE_TO_TABLE)
 
     table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].value
@@ -172,14 +174,12 @@ def move_to_table_intent_handler(handler_input):
         return handler_input.response_builder.speak(speech_text).response
     elif table_loc == None:
         if num_tables == 2:
-            print(2)
             speech_text = (
                 "I found " + str(num_tables) + " tables. Would you like the closest or farthest?")
             reprompt = "Would you like the closest or farthest?"
             # handler_input.response_builder.speak(speech_text).add_directive(DelegateDirective(updated_intent=Intent(name="ChooseTable")))
             return handler_input.response_builder.speak(speech_text).ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseTable"), slot_to_elicit="table_loc")).response
         else:
-            print(num_tables)
             speech_text = (
                 "I found " + str(num_tables) + " tables. Would you like the closest, farthest, or another one?")
             reprompt = "Would you like the closest, farthest, or another one?"
@@ -217,19 +217,18 @@ def choose_table_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("HandFromGround"))
 def hand_from_ground_intent_handler(handler_input):
+    num_objects = 4
     
     set_intent_info(Intents.GRAB_FROM_GROUND)
 
     if num_objects == 1:
         speech_text = "Grabbing the object."
     if num_objects == 2:
-        print(2)
         speech_text = (
             "I found " + str(num_objects) + " objects on the ground. Which one would you like?")
         reprompt = "Which object would you like?"
         return handler_input.response_builder.speak(speech_text).ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc")).response
     else:
-        print(num_objects)
         speech_text = (
             "I found " + str(num_objects) + " objects on the ground. Which one would you like?")
         reprompt = "Which object would you like?"
@@ -439,8 +438,8 @@ def set_intent_info(intent_num):
         intent_name = "testing"
     
     current_intent = intent_name
-    node_data['intent'] = intent_num.value
-    print(node_data['intent'])
+    #node_data['intent'] = intent_num.value
+    print(intent_name)
 
 #### ros2 node ####
 class WebPageNode(Node):
@@ -453,9 +452,11 @@ class WebPageNode(Node):
     def publish_message(self):
         global node_data
         msg = Int32()
-        msg.data = node_data['intent']
-        self.publisher.publish(msg)
-        self.get_logger().info(f'Publishing: {msg.data}')
+        if node_data['intent'] != 1111:
+            msg.data = node_data['intent']
+            self.publisher.publish(msg)
+            self.get_logger().info(f'Publishing: {msg.data}')
+            node_data['intent'] = 1111
 
 def run_ros2_node():
      rclpy.init()
