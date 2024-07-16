@@ -18,6 +18,7 @@ import threading
 import rclpy.publisher
 from std_msgs.msg import Int32
 
+import util
 from util import Intents
 
 # port for local hosting
