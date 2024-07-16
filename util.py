@@ -9,9 +9,6 @@ class Intents(Enum):
     GRAB_FROM_GROUND = 6
     TEST_LIFT_SMALL = 7
 
-
-
-
 BASE_LENGTH = .34
 BASE_WIDTH = .33
 

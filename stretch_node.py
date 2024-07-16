@@ -4,15 +4,13 @@ from rclpy.node import Node
 from std_msgs.msg import Int32
 from std_srvs.srv import Trigger
 
-import util
-from util import Intents
+import alexa_and_stretch.util
+from alexa_and_stretch.util import Intents
 import time
 import math
 
 import stretch_body
 import stretch_body.robot as rb
-
-# source /opt/ros/humble/setup.bash
 
 class AlexaCommands(Node):
     #### Constants
@@ -28,10 +26,10 @@ class AlexaCommands(Node):
         self.subscribtion
 
         self.robot = rb.Robot()
-        self.robot.start()
+        self.robot.startup()
 
     def listener_callback(self, msg):
-        # self.get_logger().info('I heard: "%s"' % msg.data)
+        self.get_logger().info('I heard: "%s"' % msg.data)
         num = int(f"{msg.data}")
         self.issue_alexa_command(num)
 
@@ -64,7 +62,7 @@ class AlexaCommands(Node):
         # self.robot.stop()
 
     def move_lift_small(self):
-        self.robot.lift.move_to(1)
+        self.robot.lift.move_to(.9)
         self.robot.push_command()
 
     # def scan_room(self):

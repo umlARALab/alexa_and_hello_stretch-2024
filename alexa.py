@@ -27,7 +27,7 @@ PORT = 9999
 # ngrok http 9999 to start
 # python alexa.py
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates')
 
 node_data = {'intent': 1111}
 
@@ -48,7 +48,7 @@ def homepage():
         custom_text = ", ".join(custom_intent)
         
     # need to fix return
-    return render_template('alexa_and_stretch.templates/index.html', intent = current_intent, movements = current_movement, custom = custom_text)
+    return render_template('index.html', intent = current_intent, movements = current_movement, custom = custom_text)
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
@@ -438,7 +438,7 @@ def set_intent_info(intent_num):
         intent_name = "testing"
     
     current_intent = intent_name
-    #node_data['intent'] = intent_num.value
+    node_data['intent'] = intent_num.value
     print(intent_name)
 
 #### ros2 node ####
