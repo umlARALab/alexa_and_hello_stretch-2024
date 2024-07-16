@@ -10,6 +10,9 @@ class Intents(Enum):
     TEST_LIFT_SMALL = 7
     GET_TABLES = 8
     GET_OBJECTS = 9
+    CUSTOM_1 = 10
+    CUSTOM_2 = 11
+    CUSTOM_3 = 12
 
 BASE_LENGTH = .34
 BASE_WIDTH = .33

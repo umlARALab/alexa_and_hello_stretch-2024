@@ -1,16 +1,18 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, String
 from std_srvs.srv import Trigger
 
-import alexa_and_stretch.util as util
-from alexa_and_stretch.util import Intents
+# import alexa_and_stretch.util as util
+# from alexa_and_stretch.util import Intents
+import util
+from util import Intents
 import time
 import math
 
-import stretch_body
-import stretch_body.robot as rb
+# import stretch_body
+# import stretch_body.robot as rb
 
 #### Constants
 tables = []
@@ -23,25 +25,27 @@ class AlexaCommands(Node):
     def __init__(self):
         super().__init__("stretch_alexa_commands_node")
 
-        self.publisher = self.create_publisher(Int32, "num_tables_topic", 10)
-        self.publisher = self.create_publisher(Int32, "num_objects_topic", 10)
+        self.tables_publisher = self.create_publisher(Int32, "num_tables_topic", 10)
+        self.objects_publisher = self.create_publisher(Int32, "num_objects_topic", 10)
 
-        self.subscribtion = self.create_subscription(
+        self.intent_subscribtion = self.create_subscription(
             Int32, "selected_intent_topic", self.intent_listener_callback, 10
         )
-        self.subscribtion = self.create_subscription(
+        self.table_subscribtion = self.create_subscription(
             Int32, "selected_table_topic", self.table_listener_callback, 10
         )
-        self.subscribtion = self.create_subscription(
+        self.object_subscribtion = self.create_subscription(
             Int32, "selected_object_topic", self.object_listener_callback, 10
         )
-        self.subscribtion
+        self.custom_subscribtion = self.create_subscription(
+            String, "custom_intent_topic", self.custom_listener_callback, 10
+        )
 
         self.get_logger().info("Initialized")
-        self.create_timer(1.0, self.publish_message)
+        # self.create_timer(1.0, self.publish_message)
 
-        self.robot = rb.Robot()
-        self.robot.startup()
+        # self.robot = rb.Robot()
+        # self.robot.startup()
 
     def intent_listener_callback(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
@@ -59,6 +63,12 @@ class AlexaCommands(Node):
         self.get_logger().info('I heard: "%s"' % msg.data)
         num = int(f"{msg.data}")
         chosen_object = num
+
+    def custom_listener_callback(self, msg):
+        custom_intent = msg.data.split(', ')
+        custom_intent.pop(0)
+        print(custom_intent)
+        self.run_custom_intent(custom_intent)
 
     def issue_alexa_command(self, intent):
 
@@ -91,8 +101,38 @@ class AlexaCommands(Node):
         elif intent == Intents.TEST_LIFT_SMALL.value:
             self.get_logger().info("small")
             # self.move_lift_small()
-
         # self.robot.stop()
+
+    def run_custom_intent(self, custom_intent):
+        for i in custom_intent:
+            if i is "Forward":
+                pass
+            elif i is "Backwards":
+                pass
+            elif i is "Turn Left":
+                pass
+            elif i is "Turn Right":
+                pass
+            elif i is "Move Lift Up":
+                pass
+            elif i is "Move Lift Down":
+                pass
+            elif i is "Extend Arm":
+                pass
+            elif i is "Collapse Arm":
+                pass
+            elif i is "Rotate Wrist Left":
+                pass
+            elif i is "Rotate Wrist Right":
+                pass
+            elif i is "Open Gripper":
+                pass
+            elif i is "Close Gripper":
+                pass
+            elif i is "Wait":
+                pass
+        
+        self.robot.push_command()
 
     def move_lift_small(self):
         self.robot.lift.move_to(0.5)
@@ -126,6 +166,7 @@ class AlexaCommands(Node):
         global tables
         # something w/ cameras
         tables = [(0,0), (1,1), (2,2), (3,3)]
+        self.publish_tables_message()
 
     def get_table(self):
         global chosen_table
@@ -164,6 +205,7 @@ class AlexaCommands(Node):
         global objects
         # something w/ cameras
         objects = [(0,0), (1,1), (2,2), (3,3)]
+        self.publish_objects_message()
 
     def get_object(self):
         global chosen_obj
@@ -229,11 +271,9 @@ class AlexaCommands(Node):
         num_objects = len(objects)
 
         msg = Int32()
-        if num_objects >= 0:
-            msg.data = num_objects
-            self.publisher.publish(msg)
-            self.get_logger().info(f"Publishing num_objects: {msg.data}")
-            num_objects = -1
+        msg.data = num_objects
+        self.objects_publisher.publish(msg)
+        self.get_logger().info(f"Publishing num_objects: {msg.data}")
 
     def publish_tables_message(self):
         global tables
@@ -241,11 +281,9 @@ class AlexaCommands(Node):
         num_tables = len(tables)
 
         msg = Int32()
-        if num_tables >= 0:
-            msg.data = num_tables
-            self.publisher.publish(msg)
-            self.get_logger().info(f"Publishing num_tables: {msg.data}")
-            num_tables = -1
+        msg.data = num_tables
+        self.tables_publisher.publish(msg)
+        self.get_logger().info(f"Publishing num_tables: {msg.data}")
 
 def main(args=[]):
     rclpy.init(args=args)

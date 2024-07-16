@@ -27,30 +27,35 @@ import rclpy
 from rclpy.node import Node
 import threading
 import rclpy.publisher
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, String
 
-from alexa_and_stretch.util import Intents
+# from alexa_and_stretch.util import Intents
+from util import Intents
 
 # port for local hosting
 PORT = 9999
 
 #### run these commands in two terminals to start hosting
 # ngrok http 9999 to start
-# python alexa.py
+# python3 alexa.py
 
 app = Flask(
     __name__,
-    template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
+    # template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
 )
 
 node_data = {"intent": 1111}
 
 sb = SkillBuilder()
 
+# VERIFY_TIMESTAMP_APP_CONFIG = False
+
 current_intent = ""
 current_movement = ""
 custom_intent = None
 custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action 3"]]
+send_custom_intent = False
+custom_intent_num = -1
 
 num_objects = 0
 num_tables = 0
@@ -443,7 +448,7 @@ def choose_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
 def user_custom_action_intent_handler(handler_input):
-    # global current_intent, custom_intent
+    global current_intent, custom_intent, send_custom_intent
 
     # custom_intent_num = handler_input.request_envelope.request.intent.slots['custom_intent_num']
     # print(custom_intent_num)
@@ -464,6 +469,8 @@ def user_custom_action_intent_handler(handler_input):
     #     else:
     #         speech = "I'm sorry, there are only three custom actions available."
 
+    send_custom_intent = True
+
     return handler_input.response_builder.speak(speech).response
 
 
@@ -480,7 +487,7 @@ skill_response.register(app=app, route="/")
 
 @app.route("/button_click", methods=["POST"])
 def button_click():
-    global current_intent, current_movement
+    global current_intent, current_movement, send_custom_intent
 
     button_id = request.form.get("button_id")
 
@@ -498,6 +505,10 @@ def button_click():
         set_intent_info(Intents.STOW)
     elif "small_move_test" == button_id:
         set_intent_info(Intents.TEST_LIFT_SMALL)
+    elif "custom_1" == button_id:
+        print("!")
+        set_intent_info(Intents.CUSTOM_1)
+        send_custom_intent = True
 
     return jsonify({"result": button_id})
 
@@ -516,6 +527,8 @@ def custom_intent_builder():
             custom_intent.append(name)
         else:
             custom_intent.append(id)
+
+        # print(custom_intent)
 
         return jsonify({"result": id})
     else:
@@ -542,7 +555,7 @@ def radio_selection():
 
 
 def set_intent_info(intent_num):
-    global current_intent, current_movement, node_data
+    global current_intent, current_movement, node_data, custom_intent_num
 
     if intent_num == Intents.STOP:
         intent_name = "Hello Stretch Stop"
@@ -562,6 +575,15 @@ def set_intent_info(intent_num):
         current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
     elif intent_num == Intents.TEST_LIFT_SMALL:
         intent_name = "testing"
+    elif intent_num == Intents.CUSTOM_1:
+        intent_name = "custom 1"
+        custom_intent_num = 0
+    elif intent_num == Intents.CUSTOM_2:
+        intent_name = "custom 2"
+        custom_intent_num = 1
+    elif intent_num == Intents.CUSTOM_3:
+        intent_name = "custom 3"
+        custom_intent_num = 2
     else:
         intent_name = "other"
 
@@ -573,18 +595,19 @@ def set_intent_info(intent_num):
 #### ros2 node ####
 class WebPageNode(Node):
     def __init__(self):
+        global send_custom_intent, custom_intent_num
         super().__init__("web_page_node")
-        self.publisher = self.create_publisher(Int32, "selected_intent_topic", 10)
-        self.publisher = self.create_publisher(Int32, "selected_table_topic", 10)
-        self.publisher = self.create_publisher(Int32, "selected_object_topic", 10)
+        self.intent_publisher = self.create_publisher(Int32, "selected_intent_topic", 10)
+        self.table_publisher = self.create_publisher(Int32, "selected_table_topic", 10)
+        self.object_publisher = self.create_publisher(Int32, "selected_object_topic", 10)
+        self.custom_publisher = self.create_publisher(String, "custom_intent_topic", 10)
 
-        self.subscribtion = self.create_subscription(
+        self.num_objects_subscribtion = self.create_subscription(
             Int32, "num_objects_topic", self.num_objects_callback, 10
         )
-        self.subscribtion = self.create_subscription(
+        self.num_tables_subscribtion = self.create_subscription(
             Int32, "num_tables_topic", self.num_tables_callback, 10
         )
-        self.subscribtion
 
         self.get_logger().info("Initialized")
         self.create_timer(1.0, self.publish_message)
@@ -605,16 +628,23 @@ class WebPageNode(Node):
         num_tables = num
 
     def publish_message(self):
+        global send_custom_intent
+
         self.publish_intent()
         self.publish_chosen_object()
-        self.publish_chosen_table
+        self.publish_chosen_table()
+
+        if send_custom_intent is True:
+            
+            self.publish_custom_intent(custom_intent_num)
+            send_custom_intent = False
 
     def publish_intent(self):
         global node_data
         msg = Int32()
         if node_data["intent"] != 1111:
             msg.data = node_data["intent"]
-            self.publisher.publish(msg)
+            self.intent_publisher.publish(msg)
             self.get_logger().info(f"Publishing: {msg.data}")
             node_data["intent"] = 1111
 
@@ -623,7 +653,7 @@ class WebPageNode(Node):
         msg = Int32()
         if chosen_object >= 0:
             msg.data = chosen_object
-            self.publisher.publish(msg)
+            self.object_publisher.publish(msg)
             self.get_logger().info(f"Publishing num_objects: {msg.data}")
             chosen_object = -1
 
@@ -632,9 +662,21 @@ class WebPageNode(Node):
         msg = Int32()
         if chosen_table >= 0:
             msg.data = chosen_table
-            self.publisher.publish(msg)
+            self.table_publisher.publish(msg)
             self.get_logger().info(f"Publishing num_tables: {msg.data}")
             chosen_table = -1
+
+    def publish_custom_intent(self, num):
+        global custom_intent_array
+        print("2")
+        msg = String()
+
+        # print(custom_intent_array[num])
+
+        if custom_intent_array[num] is not "":
+            msg.data = ", ".join(custom_intent_array[num])
+            self.custom_publisher.publish(msg)
+            self.get_logger().info(f"Publishing custom action " + str(num))
 
 def run_ros2_node():
     rclpy.init()
