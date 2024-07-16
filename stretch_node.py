@@ -74,63 +74,73 @@ class AlexaCommands(Node):
 
         print(intent)
         self.publish_message
-        if intent == Intents.STOP.value:
-            self.get_logger().info("stop")
-            # self.robot.stop()
-        elif intent == Intents.STOW.value:
-            self.get_logger().info("stow")
-            # self.robot.stow()
-        elif intent == Intents.SCAN_ROOM.value:
-            self.get_logger().info("scan")
-            # self.scan_room()
-        elif intent == Intents.REACH_TABLE.value:
-            self.get_logger().info("reach")
-            # self.reach_table
-        elif intent == Intents.MOVE_TO_TABLE.value:
-            self.get_logger().info("move table")
-            self.get_table()
-        elif intent == Intents.GRAB_FROM_GROUND.value:
-            self.get_logger().info("grab obj")
-            self.get_object()
-        elif intent == Intents.GET_TABLES.value:
-            self.get_logger().info("get table")
-            self.look_for_tables()
-        elif intent == Intents.GET_OBJECTS.value:
-            self.get_logger().info("get obj")
-            self.look_for_objects()
-        elif intent == Intents.TEST_LIFT_SMALL.value:
-            self.get_logger().info("small")
-            # self.move_lift_small()
+    
+        match intent:
+            case Intents.STOP.value:
+                self.get_logger().info("stop")
+                # self.robot.stop()
+            case Intents.STOW.value:
+                self.get_logger().info("stow")
+                # self.robot.stow()
+            case Intents.SCAN_ROOM.value:
+                self.get_logger().info("scan")
+                # self.scan_room()
+            case Intents.REACH_TABLE.value:
+                self.get_logger().info("reach")
+                # self.reach_table
+            case Intents.MOVE_TO_TABLE.value:
+                self.get_logger().info("move table")
+                self.get_table()
+            case Intents.GRAB_FROM_GROUND.value:
+                self.get_logger().info("grab obj")
+                self.get_object()
+            case Intents.GET_TABLES.value:
+                self.get_logger().info("get table")
+                self.look_for_tables()
+            case Intents.GET_OBJECTS.value:
+                self.get_logger().info("get obj")
+                self.look_for_objects()
+            case Intents.TEST_LIFT_SMALL.value:
+                self.get_logger().info("small")
+                # self.move_lift_small()
+
         # self.robot.stop()
 
     def run_custom_intent(self, custom_intent):
+
+        # use util CUSTOM
+        # check to make sure it does not exceed limits first
+        # need to subscribe to joint states and whatever will give you limits
+
+
         for i in custom_intent:
-            if i is "Forward":
-                pass
-            elif i is "Backwards":
-                pass
-            elif i is "Turn Left":
-                pass
-            elif i is "Turn Right":
-                pass
-            elif i is "Move Lift Up":
-                pass
-            elif i is "Move Lift Down":
-                pass
-            elif i is "Extend Arm":
-                pass
-            elif i is "Collapse Arm":
-                pass
-            elif i is "Rotate Wrist Left":
-                pass
-            elif i is "Rotate Wrist Right":
-                pass
-            elif i is "Open Gripper":
-                pass
-            elif i is "Close Gripper":
-                pass
-            elif i is "Wait":
-                pass
+            match i:
+                case "Forward":
+                    pass
+                case "Backwards":
+                    pass
+                case "Turn Left":
+                    pass
+                case "Turn Right":
+                    pass
+                case "Move Lift Up":
+                    pass
+                case "Move Lift Down":
+                    pass
+                case "Extend Arm":
+                    pass
+                case "Collapse Arm":
+                    pass
+                case "Rotate Wrist Left":
+                    pass
+                case "Rotate Wrist Right":
+                    pass
+                case "Open Gripper":
+                    pass
+                case "Close Gripper":
+                    pass
+                case "Wait":
+                    pass
         
         self.robot.push_command()
 

@@ -4,6 +4,7 @@
     <head>
         <title>Amazon Alexa & Hello Stretch Interface</title>
 
+        <!-- Sends POST requests when certian features (buttons. radio buttons) are clicked-->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script type="text/javascript">
             $(document).ready(function() {
@@ -33,12 +34,10 @@
                         data: {button_id: buttonId}
                     });
                 });
-                // window.setInterval(function(){
-                //     $('#CurrentAction').load('/ #CurrentAction');
-                // }, 5000)
-
                 
             });
+
+            // called to reload the page when a button is pressed
             function refreshPage(){
                 console.log("in")
                 location.reload();
@@ -48,11 +47,15 @@
     <body>
         <h1>Amazon Alexa & Hello Stretch Interface</h1>
         <h3>Say <i>"Alexa, tell Hello Stretch..."</i> to give your Hello Stretch Robot a command.</h3>
+        
+        <!-- Displays the current Alexa intent and the movement series associated with it-->
         <div id='CurrentAction'>
             <h2>Current Action:</h2>
             <p>{{ intent }}</p>
             <p>{{ movements }}</p>
         </div>
+
+        <!-- Buttons to run Alexa intents -->
         <div id='ButtonMode'>
             <h2>Action Buttons</h2>
             <button id="scan_room" class="btn-intents" onClick="refreshPage()">Scan Room</button>
@@ -64,9 +67,13 @@
             <button id="small_move_test" class="btn-intents" onClick="refreshPage()">Test Lift</button>
             <button id="custom_1" class="btn-intents" onClick="refreshPage()">Custom 1</button>
         </div>
+
+        <!-- Radio buttons and buttons for building custom intents -->
         <div id='CustomIntent'>
             <h2>Make a custom action</h2>
             <h4>Which action would you like to create?</h4>
+
+            <!-- Selects which custom intent to edit -->
             <form>
                 <input type="radio" id="option1" name="radioOption" value="option1">
                 <label for="option1">Custom Action 1</label>
@@ -75,6 +82,8 @@
                 <input type="radio" id="option3" name="radioOption" value="option3">
                 <label for="option3">Custom Action 3</label>
             </form>
+
+            <!-- Buttons to add different motions for Stretch to custom intents -->
             <div>
                 <button id="Base Forward" class="btn-action" onClick="refreshPage()">Forward</button>
                 <button id="Base Backwards" class="btn-action" onClick="refreshPage()">Backwards</button>

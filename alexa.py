@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
+
+# imports needed for ASK SDK
 from flask_ask_sdk.skill_adapter import SkillAdapter
-from flask import request
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import (
     AbstractRequestHandler,
@@ -23,6 +24,7 @@ from ask_sdk_model import (
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
 
+# imports needed for ROS2 node
 import rclpy
 from rclpy.node import Node
 import threading
@@ -35,12 +37,13 @@ from util import Intents
 # port for local hosting
 PORT = 9999
 
-#### run these commands in two terminals to start hosting
+### run these commands in two terminals to start hosting
 # ngrok http 9999 to start
 # python3 alexa.py
 
 app = Flask(
     __name__,
+    # location of html template on Stretch
     # template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
 )
 
@@ -50,17 +53,21 @@ sb = SkillBuilder()
 
 # VERIFY_TIMESTAMP_APP_CONFIG = False
 
+# fillers for html page
 current_intent = ""
 current_movement = ""
+
+# custom intent variables
 custom_intent = None
 custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action 3"]]
 send_custom_intent = False
 custom_intent_num = -1
 
+# variables for user selection
 num_objects = 0
-num_tables = 0
-
 chosen_object = -1
+
+num_tables = 0
 chosen_table = -1
 
 @app.route("/")
@@ -72,7 +79,6 @@ def homepage():
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
 
-    # need to fix return
     return render_template(
         "index.html",
         intent=current_intent,
@@ -81,12 +87,15 @@ def homepage():
     )
 
 
+# --------------------------------------------------------------------
+# Amazon Alexa Handlers
+# --------------------------------------------------------------------
+
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
     global current_intent
     current_intent = "Launch Request"
 
-    # type: (HandlerInput) -> Response
     speech_text = "Welcome to the Alexa Skills Kit, you can say hello!"
 
     handler_input.response_builder.speak(speech_text).set_card(
@@ -100,7 +109,6 @@ def hello_world_intent_handler(handler_input):
     global current_intent
     current_intent = "Hello World Intent"
 
-    # type: (HandlerInput) -> Response
     speech_text = "Hello World!"
 
     handler_input.response_builder.speak(speech_text).set_card(
@@ -115,7 +123,6 @@ def help_intent_handler(handler_input):
     global current_intent
     current_intent = "Amazon Help Intent"
 
-    # type: (HandlerInput) -> Response
     speech_text = "You can say hello to me!"
 
     handler_input.response_builder.speak(speech_text).ask(speech_text).set_card(
@@ -134,7 +141,6 @@ def cancel_and_stop_intent_handler(handler_input):
     global current_intent
     current_intent = "Amazon Cancel or Stop Intent"
 
-    # type: (HandlerInput) -> Response
     speech_text = "Goodbye!"
 
     handler_input.response_builder.speak(speech_text).set_card(
@@ -148,9 +154,6 @@ def session_ended_request_handler(handler_input):
     global current_intent
     current_intent = "Session End Request"
 
-    # type: (HandlerInput) -> Response
-    # any cleanup logic goes here
-
     return handler_input.response_builder.response
 
 
@@ -159,8 +162,6 @@ def all_exception_handler(handler_input, exception):
     global current_intent
     current_intent = "Exception Handler"
 
-    # type: (HandlerInput, Exception) -> Response
-    # Log the exception in CloudWatch Logs
     print(exception)
 
     speech = "Sorry, I didn't get it. Can you please say it again!!"
@@ -168,8 +169,9 @@ def all_exception_handler(handler_input, exception):
     return handler_input.response_builder.response
 
 
-##### HELLO STRETCH INTENT HANDLERS #####
-
+# --------------------------------------------------------------------
+# Hello Stretch Alexa Intent Handlers
+# --------------------------------------------------------------------
 
 @sb.request_handler(can_handle_func=is_intent_name("ScanRoom"))
 def scan_room_intent_handler(handler_input):
@@ -177,10 +179,7 @@ def scan_room_intent_handler(handler_input):
     # set_intent_info(Intents.SCAN_ROOM)
     set_intent_info(Intents.TEST_LIFT_SMALL)
 
-    # type: (HandlerInput) -> Response
     speech_text = "Scanning the room!"
-
-    # scan_room()
 
     handler_input.response_builder.speak(speech_text)
     return handler_input.response_builder.response
@@ -193,10 +192,7 @@ def grab_from_table_intent_handler(handler_input):
 
     print(current_movement)
 
-    # type: (HandlerInput) -> Response
     speech_text = "Grab from table!"
-
-    # reach_table()
 
     handler_input.response_builder.speak(speech_text)
     return handler_input.response_builder.response
@@ -262,7 +258,6 @@ def move_to_table_intent_handler(handler_input):
 @sb.request_handler(can_handle_func=is_intent_name("ChooseTable"))
 def choose_table_intent_handler(handler_input):
     global chosen_table
-    # type: (HandlerInput) -> Response
 
     table_loc = (
         handler_input.request_envelope.request.intent.slots["table_loc"]
@@ -376,7 +371,6 @@ def get_intents_list_intent_handler(handler_input):
     global current_intent
     current_intent = "Hello Stretch Get Action List"
 
-    # type: (HandlerInput) -> Response
 
     # want_to_continue = handler_input.request_envelope.request.intent.slots['want_to_continue'].resolutions.resolutions_per_authority[0].values[0].value.name
     persistence_attr = handler_input.attributes_manager.persistent_attributes
@@ -389,35 +383,35 @@ def get_intents_list_intent_handler(handler_input):
     )
     print(intent_choice)
 
-    if intent_choice == "scan room":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="ScanRoom"))
-        ).response
-    elif intent_choice == "pick up from the ground":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="HandFromGround"))
-        ).response
-    elif intent_choice == "move to a table":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="MoveToTable"))
-        ).response
-    elif intent_choice == "reach for a table":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
-        ).response
-    elif intent_choice == "repeat":
-        intent_choice = None
-        # handler_input.attributes_manager.set_session_attributes(None)
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="GetIntentsList"))
-        ).response
-    else:
-        return handler_input.response_builder.speak("Ok. Goodbye")
+    match intent_choice:
+        case "scan room":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="ScanRoom"))
+            ).response
+        case "pick up from the ground":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="HandFromGround"))
+            ).response
+        case "move to a table":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="MoveToTable"))
+            ).response
+        case "reach for a table":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
+            ).response
+        case "repeat":
+            intent_choice = None
+            # handler_input.attributes_manager.set_session_attributes(None)
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="GetIntentsList"))
+            ).response
+        case _:
+            return handler_input.response_builder.speak("Ok. Goodbye")
 
 
 @sb.request_handler(can_handle_func=is_intent_name("ChooseIntent"))
 def choose_intent_handler(handler_input):
-    # type: (HandlerInput) -> Response
 
     intent_choice = (
         handler_input.request_envelope.request.intent.slots["intent_choice"]
@@ -426,24 +420,25 @@ def choose_intent_handler(handler_input):
         .value.name
     )
 
-    if intent_choice == "scan room":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="ScanRoom"))
-        ).response
-    elif intent_choice == "pick up from the ground":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="HandFromGround"))
-        ).response
-    elif intent_choice == "move to a table":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="MoveToTable"))
-        ).response
-    elif intent_choice == "reach for a table":
-        return handler_input.response_builder.add_directive(
-            DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
-        ).response
-    else:
-        return handler_input.response_builder.speak("Ok. No action selected.")
+    match intent_choice:
+        case "scan room":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="ScanRoom"))
+            ).response
+        case "pick up from the ground":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="HandFromGround"))
+            ).response
+        case "move to a table":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="MoveToTable"))
+            ).response
+        case "reach for a table":
+            return handler_input.response_builder.add_directive(
+                DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
+            ).response
+        case _:
+            return handler_input.response_builder.speak("Ok. No action selected.")
 
 
 @sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
@@ -474,6 +469,8 @@ def user_custom_action_intent_handler(handler_input):
     return handler_input.response_builder.speak(speech).response
 
 
+# Create skill
+
 skill_response = SkillAdapter(
     skill=sb.create(),
     skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188",
@@ -482,8 +479,9 @@ skill_response = SkillAdapter(
 
 skill_response.register(app=app, route="/")
 
-###### Page interactions
-
+# --------------------------------------------------------------------
+# Web Page Interactions
+# --------------------------------------------------------------------
 
 @app.route("/button_click", methods=["POST"])
 def button_click():
@@ -491,32 +489,33 @@ def button_click():
 
     button_id = request.form.get("button_id")
 
-    if "scan_room" == button_id:
-        set_intent_info(Intents.SCAN_ROOM)
-    elif "grab_from_table" == button_id:
-        set_intent_info(Intents.REACH_TABLE)
-    elif "move_to_table" == button_id:
-        set_intent_info(Intents.GET_TABLES)
-    elif "grab_from_ground" == button_id:
-        set_intent_info(Intents.GET_OBJECTS)
-    elif "stop" == button_id:
-        set_intent_info(Intents.STOP)
-    elif "stow" == button_id:
-        set_intent_info(Intents.STOW)
-    elif "small_move_test" == button_id:
-        set_intent_info(Intents.TEST_LIFT_SMALL)
-    elif "custom_1" == button_id:
-        print("!")
-        set_intent_info(Intents.CUSTOM_1)
-        send_custom_intent = True
+    match button_id:
+        case "scan_room":
+            set_intent_info(Intents.SCAN_ROOM)
+        case "grab_from_table":
+            set_intent_info(Intents.REACH_TABLE)
+        case "move_to_table":
+            set_intent_info(Intents.GET_TABLES)
+        case "grab_from_ground":
+            set_intent_info(Intents.GET_OBJECTS)
+        case "stop":
+            set_intent_info(Intents.STOP)
+        case "stow":
+            set_intent_info(Intents.STOW)
+        case "small_move_test":
+            set_intent_info(Intents.TEST_LIFT_SMALL)
+        case "custom_1":
+            print("!")
+            set_intent_info(Intents.CUSTOM_1)
+            send_custom_intent = True
 
     return jsonify({"result": button_id})
-
 
 @app.route("/custom_intent", methods=["POST"])
 def custom_intent_builder():
     global custom_intent
 
+    # adds movements to a custom intent list as buttons are pressed
     if custom_intent != None:
         id = request.form.get("button_id")
         print(id)
@@ -527,8 +526,6 @@ def custom_intent_builder():
             custom_intent.append(name)
         else:
             custom_intent.append(id)
-
-        # print(custom_intent)
 
         return jsonify({"result": id})
     else:
@@ -544,12 +541,13 @@ def radio_selection():
 
     selected_option = request.form["radioOption"]
     # Perform server-side actions based on which radio button was selected
-    if selected_option == "option1":
-        custom_intent = custom_intent_array[0]
-    elif selected_option == "option2":
-        custom_intent = custom_intent_array[1]
-    elif selected_option == "option3":
-        custom_intent = custom_intent_array[2]
+    match selected_option:
+        case "option1":
+            custom_intent = custom_intent_array[0]
+        case "option2":
+            custom_intent = custom_intent_array[1]
+        case "option3":
+            custom_intent = custom_intent_array[2]
 
     return jsonify({"result": selected_option})
 
@@ -557,42 +555,45 @@ def radio_selection():
 def set_intent_info(intent_num):
     global current_intent, current_movement, node_data, custom_intent_num
 
-    if intent_num == Intents.STOP:
-        intent_name = "Hello Stretch Stop"
-    elif intent_num == Intents.STOW:
-        intent_name = "Hello Stretch Stow"
-    elif intent_num == Intents.SCAN_ROOM:
-        intent_name = "Hello Stretch Scan Room"
-        current_movement = "Rotates the wrist left or right to make a full circle"
-    elif intent_num == Intents.REACH_TABLE:
-        intent_name = "Hello Stretch Grab From Table"
-        current_movement = "Move up, extend arm, rotate wrist, and close gripper"
-    elif intent_num == Intents.MOVE_TO_TABLE:
-        intent_name = "Hello Stretch Move To Table"
-        current_movement = "Rotate the base, move forward, lift up, and rotate wrist"
-    elif intent_num == Intents.GRAB_FROM_GROUND:
-        intent_name = "Hello Stretch Hand From Ground"
-        current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
-    elif intent_num == Intents.TEST_LIFT_SMALL:
-        intent_name = "testing"
-    elif intent_num == Intents.CUSTOM_1:
-        intent_name = "custom 1"
-        custom_intent_num = 0
-    elif intent_num == Intents.CUSTOM_2:
-        intent_name = "custom 2"
-        custom_intent_num = 1
-    elif intent_num == Intents.CUSTOM_3:
-        intent_name = "custom 3"
-        custom_intent_num = 2
-    else:
-        intent_name = "other"
+    match intent_num:
+        case Intents.STOP:
+            intent_name = "Hello Stretch Stop"
+        case Intents.STOW:
+            intent_name = "Hello Stretch Stow"
+        case Intents.SCAN_ROOM:
+            intent_name = "Hello Stretch Scan Room"
+            current_movement = "Rotates the wrist left or right to make a full circle"
+        case Intents.REACH_TABLE:
+            intent_name = "Hello Stretch Grab From Table"
+            current_movement = "Move up, extend arm, rotate wrist, and close gripper"
+        case Intents.MOVE_TO_TABLE:
+            intent_name = "Hello Stretch Move To Table"
+            current_movement = "Rotate the base, move forward, lift up, and rotate wrist"
+        case Intents.GRAB_FROM_GROUND:
+            intent_name = "Hello Stretch Hand From Ground"
+            current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
+        case Intents.TEST_LIFT_SMALL:
+            intent_name = "testing"
+        case Intents.CUSTOM_1:
+            intent_name = "custom 1"
+            custom_intent_num = 0
+        case Intents.CUSTOM_2:
+            intent_name = "custom 2"
+            custom_intent_num = 1
+        case Intents.CUSTOM_3:
+            intent_name = "custom 3"
+            custom_intent_num = 2
+        case _:
+            intent_name = "other"
 
     current_intent = intent_name
     node_data["intent"] = intent_num.value
     # print(intent_name)
 
 
-#### ros2 node ####
+# --------------------------------------------------------------------
+# ROS2 Web Page Node
+# --------------------------------------------------------------------
 class WebPageNode(Node):
     def __init__(self):
         global send_custom_intent, custom_intent_num
@@ -677,6 +678,10 @@ class WebPageNode(Node):
             msg.data = ", ".join(custom_intent_array[num])
             self.custom_publisher.publish(msg)
             self.get_logger().info(f"Publishing custom action " + str(num))
+
+# --------------------------------------------------------------------
+# Runs node and Flask server
+# --------------------------------------------------------------------
 
 def run_ros2_node():
     rclpy.init()
