@@ -8,6 +8,8 @@ class Intents(Enum):
     MOVE_TO_TABLE = 5
     GRAB_FROM_GROUND = 6
     TEST_LIFT_SMALL = 7
+    GET_TABLES = 8
+    GET_OBJECTS = 9
 
 BASE_LENGTH = .34
 BASE_WIDTH = .33

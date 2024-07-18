@@ -4,11 +4,22 @@ from flask import Flask, render_template, jsonify
 from flask_ask_sdk.skill_adapter import SkillAdapter
 from flask import request
 from ask_sdk_core.skill_builder import SkillBuilder
-from ask_sdk_core.dispatch_components import AbstractRequestHandler, AbstractExceptionHandler
+from ask_sdk_core.dispatch_components import (
+    AbstractRequestHandler,
+    AbstractExceptionHandler,
+)
 from ask_sdk_core.utils import is_request_type, is_intent_name
 from ask_sdk_core.handler_input import HandlerInput
-from ask_sdk_model.dialog import (ElicitSlotDirective, DelegateDirective)
-from ask_sdk_model import (Response, IntentRequest, DialogState, SlotConfirmationStatus, Slot, ui, IntentConfirmationStatus)
+from ask_sdk_model.dialog import ElicitSlotDirective, DelegateDirective
+from ask_sdk_model import (
+    Response,
+    IntentRequest,
+    DialogState,
+    SlotConfirmationStatus,
+    Slot,
+    ui,
+    IntentConfirmationStatus,
+)
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model.intent import Intent
 
@@ -27,9 +38,12 @@ PORT = 9999
 # ngrok http 9999 to start
 # python alexa.py
 
-app = Flask(__name__, template_folder='/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates')
+app = Flask(
+    __name__,
+    template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
+)
 
-node_data = {'intent': 1111}
+node_data = {"intent": 1111}
 
 sb = SkillBuilder()
 
@@ -37,6 +51,12 @@ current_intent = ""
 current_movement = ""
 custom_intent = None
 custom_intent_array = [["Custom Action 1"], ["Custom Action 2"], ["Custom Action 3"]]
+
+num_objects = 0
+num_tables = 0
+
+chosen_object = -1
+chosen_table = -1
 
 @app.route("/")
 def homepage():
@@ -46,9 +66,15 @@ def homepage():
 
     if custom_intent is not None:
         custom_text = ", ".join(custom_intent)
-        
+
     # need to fix return
-    return render_template('index.html', intent = current_intent, movements = current_movement, custom = custom_text)
+    return render_template(
+        "index.html",
+        intent=current_intent,
+        movements=current_movement,
+        custom=custom_text,
+    )
+
 
 @sb.request_handler(can_handle_func=is_request_type("LaunchRequest"))
 def launch_request_handler(handler_input):
@@ -59,9 +85,10 @@ def launch_request_handler(handler_input):
     speech_text = "Welcome to the Alexa Skills Kit, you can say hello!"
 
     handler_input.response_builder.speak(speech_text).set_card(
-        SimpleCard("Hello World", speech_text)).set_should_end_session(
-        False)
+        SimpleCard("Hello World", speech_text)
+    ).set_should_end_session(False)
     return handler_input.response_builder.response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("HelloWorldIntent"))
 def hello_world_intent_handler(handler_input):
@@ -72,10 +99,11 @@ def hello_world_intent_handler(handler_input):
     speech_text = "Hello World!"
 
     handler_input.response_builder.speak(speech_text).set_card(
-        SimpleCard("Hello World", speech_text)).set_should_end_session(
-        True)
-    
+        SimpleCard("Hello World", speech_text)
+    ).set_should_end_session(True)
+
     return handler_input.response_builder.response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("AMAZON.HelpIntent"))
 def help_intent_handler(handler_input):
@@ -86,13 +114,17 @@ def help_intent_handler(handler_input):
     speech_text = "You can say hello to me!"
 
     handler_input.response_builder.speak(speech_text).ask(speech_text).set_card(
-        SimpleCard("Hello World", speech_text))
+        SimpleCard("Hello World", speech_text)
+    )
     return handler_input.response_builder.response
 
+
 @sb.request_handler(
-    can_handle_func=lambda handler_input :
-        is_intent_name("AMAZON.CancelIntent")(handler_input) or
-        is_intent_name("AMAZON.StopIntent")(handler_input))
+    can_handle_func=lambda handler_input: is_intent_name("AMAZON.CancelIntent")(
+        handler_input
+    )
+    or is_intent_name("AMAZON.StopIntent")(handler_input)
+)
 def cancel_and_stop_intent_handler(handler_input):
     global current_intent
     current_intent = "Amazon Cancel or Stop Intent"
@@ -101,9 +133,10 @@ def cancel_and_stop_intent_handler(handler_input):
     speech_text = "Goodbye!"
 
     handler_input.response_builder.speak(speech_text).set_card(
-        SimpleCard("Hello World", speech_text)).set_should_end_session(
-            True)
+        SimpleCard("Hello World", speech_text)
+    ).set_should_end_session(True)
     return handler_input.response_builder.response
+
 
 @sb.request_handler(can_handle_func=is_request_type("SessionEndedRequest"))
 def session_ended_request_handler(handler_input):
@@ -114,6 +147,7 @@ def session_ended_request_handler(handler_input):
     # any cleanup logic goes here
 
     return handler_input.response_builder.response
+
 
 @sb.exception_handler(can_handle_func=lambda i, e: True)
 def all_exception_handler(handler_input, exception):
@@ -131,6 +165,7 @@ def all_exception_handler(handler_input, exception):
 
 ##### HELLO STRETCH INTENT HANDLERS #####
 
+
 @sb.request_handler(can_handle_func=is_intent_name("ScanRoom"))
 def scan_room_intent_handler(handler_input):
 
@@ -140,10 +175,11 @@ def scan_room_intent_handler(handler_input):
     # type: (HandlerInput) -> Response
     speech_text = "Scanning the room!"
 
-    #scan_room()
+    # scan_room()
 
     handler_input.response_builder.speak(speech_text)
     return handler_input.response_builder.response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("GrabFromTable"))
 def grab_from_table_intent_handler(handler_input):
@@ -155,126 +191,180 @@ def grab_from_table_intent_handler(handler_input):
     # type: (HandlerInput) -> Response
     speech_text = "Grab from table!"
 
-    #reach_table()
+    # reach_table()
 
     handler_input.response_builder.speak(speech_text)
     return handler_input.response_builder.response
 
+
 @sb.request_handler(can_handle_func=is_intent_name("MoveToTable"))
 def move_to_table_intent_handler(handler_input):
-    num_tables = 3
-    set_intent_info(Intents.MOVE_TO_TABLE)
+    global num_tables
 
-    table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].value
+    set_intent_info(Intents.GET_TABLES)
+
+    table_loc = handler_input.request_envelope.request.intent.slots["table_loc"].value
 
     if num_tables == 1:
-        #table = choose_table(0)
-        #move_to_table(table[0], table[1])
+        # table = choose_table(0)
+        # move_to_table(table[0], table[1])
         speech_text = "I only see one table. Moving to the table."
         return handler_input.response_builder.speak(speech_text).response
     elif table_loc == None:
         if num_tables == 2:
             speech_text = (
-                "I found " + str(num_tables) + " tables. Would you like the closest or farthest?")
+                "I found "
+                + str(num_tables)
+                + " tables. Would you like the closest or farthest?"
+            )
             reprompt = "Would you like the closest or farthest?"
             # handler_input.response_builder.speak(speech_text).add_directive(DelegateDirective(updated_intent=Intent(name="ChooseTable")))
-            return handler_input.response_builder.speak(speech_text).ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseTable"), slot_to_elicit="table_loc")).response
+            return (
+                handler_input.response_builder.speak(speech_text)
+                .ask(reprompt)
+                .add_directive(
+                    ElicitSlotDirective(
+                        updated_intent=Intent(name="ChooseTable"),
+                        slot_to_elicit="table_loc",
+                    )
+                )
+                .response
+            )
         else:
             speech_text = (
-                "I found " + str(num_tables) + " tables. Would you like the closest, farthest, or another one?")
+                "I found "
+                + str(num_tables)
+                + " tables. Would you like the closest, farthest, or another one?"
+            )
             reprompt = "Would you like the closest, farthest, or another one?"
-            handler_input.response_builder.ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseTable"), slot_to_elicit="table_loc"))
+            handler_input.response_builder.ask(reprompt).add_directive(
+                ElicitSlotDirective(
+                    updated_intent=Intent(name="ChooseTable"),
+                    slot_to_elicit="table_loc",
+                )
+            )
     else:
         if table_loc == "farthest":
             speech_text = "Ok. Moving to the farthest table."
-            #table = choose_table(0)
+            # table = choose_table(0)
         elif table_loc == "closest":
             speech_text = "Ok. Moving to the closest table."
-            #table = choose_table(num_tables)
+            # table = choose_table(num_tables)
 
     return handler_input.response_builder.speak(speech_text).response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("ChooseTable"))
 def choose_table_intent_handler(handler_input):
-
+    global chosen_table
     # type: (HandlerInput) -> Response
-    
-    table_loc = handler_input.request_envelope.request.intent.slots['table_loc'].resolutions.resolutions_per_authority[0].values[0].value.name
 
-    speech_text = ("There are tables.")
+    table_loc = (
+        handler_input.request_envelope.request.intent.slots["table_loc"]
+        .resolutions.resolutions_per_authority[0]
+        .values[0]
+        .value.name
+    )
+
+    speech_text = "There are tables."
 
     if table_loc == "farthest":
         speech_text = "Ok. Moving to the farthest table."
-        #table = choose_table(0)
+        chosen_table = 0
     elif table_loc == "closest":
         speech_text = "Ok. Moving to the closest table."
-        #table = choose_table(num_tables)
+        chosen_table = 1
     else:
         speech_text = "Alright. Let's do something else."
-    
-    #move_to_table(table[0], table[1])
+
+    set_intent_info(Intents.MOVE_TO_TABLE)
+
     return handler_input.response_builder.speak(speech_text).response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("HandFromGround"))
 def hand_from_ground_intent_handler(handler_input):
-    num_objects = 4
-    
-    set_intent_info(Intents.GRAB_FROM_GROUND)
+    global num_objects
+
+    set_intent_info(Intents.GET_OBJECTS)
 
     if num_objects == 1:
         speech_text = "Grabbing the object."
     if num_objects == 2:
         speech_text = (
-            "I found " + str(num_objects) + " objects on the ground. Which one would you like?")
+            "I found "
+            + str(num_objects)
+            + " objects on the ground. Which one would you like?"
+        )
         reprompt = "Which object would you like?"
-        return handler_input.response_builder.speak(speech_text).ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc")).response
+        return (
+            handler_input.response_builder.speak(speech_text)
+            .ask(reprompt)
+            .add_directive(
+                ElicitSlotDirective(
+                    updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc"
+                )
+            )
+            .response
+        )
     else:
         speech_text = (
-            "I found " + str(num_objects) + " objects on the ground. Which one would you like?")
+            "I found "
+            + str(num_objects)
+            + " objects on the ground. Which one would you like?"
+        )
         reprompt = "Which object would you like?"
-        handler_input.response_builder.ask(reprompt).add_directive(ElicitSlotDirective(updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc"))
+        handler_input.response_builder.ask(reprompt).add_directive(
+            ElicitSlotDirective(
+                updated_intent=Intent(name="ChooseObject"), slot_to_elicit="obj_loc"
+            )
+        )
 
     return handler_input.response_builder.speak(speech_text).response
 
+
 @sb.request_handler(can_handle_func=is_intent_name("ChooseObject"))
 def choose_object_intent_handler(handler_input):
-    # type: (HandlerInput) -> Response
-    
-    obj_loc = handler_input.request_envelope.request.intent.slots['obj_loc'].resolutions.resolutions_per_authority[0].values[0].value.name
+    global chosen_object
+
+    obj_loc = (
+        handler_input.request_envelope.request.intent.slots["obj_loc"]
+        .resolutions.resolutions_per_authority[0]
+        .values[0]
+        .value.name
+    )
     print(obj_loc)
 
     if obj_loc == "right":
         speech_text = "Ok. Grabbing the right one."
+        chosen_object = 0
     elif obj_loc == "left":
         speech_text = "Ok. Grabbing the left one."
+        chosen_object = 1
     else:
         speech_text = "Alright. Let's do something else."
-    
+
+    set_intent_info(Intents.GRAB_FROM_GROUND)
+
     return handler_input.response_builder.speak(speech_text).response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("StopRobotIntent"))
 def stop_robot_intent_handler(handler_input):
     set_intent_info(Intents.STOP)
 
-    # type: (HandlerInput) -> Response
-    
     speech_text = "Stopping Hello Stretch!"
 
-    #stop()
-    
     return handler_input.response_builder.speak(speech_text).response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("StowIntent"))
 def stow_intent_handler(handler_input):
     set_intent_info(Intents.STOW)
-
-    # type: (HandlerInput) -> Response
-    
     speech_text = "Stowing Hello Stretch!"
 
-    #stow()
-    
     return handler_input.response_builder.speak(speech_text).response
+
 
 @sb.request_handler(can_handle_func=is_intent_name("GetIntentsList"))
 def get_intents_list_intent_handler(handler_input):
@@ -286,40 +376,70 @@ def get_intents_list_intent_handler(handler_input):
     # want_to_continue = handler_input.request_envelope.request.intent.slots['want_to_continue'].resolutions.resolutions_per_authority[0].values[0].value.name
     persistence_attr = handler_input.attributes_manager.persistent_attributes
 
-    intent_choice = handler_input.request_envelope.request.intent.slots['intent_choice'].resolutions.resolutions_per_authority[0].values[0].value.name
+    intent_choice = (
+        handler_input.request_envelope.request.intent.slots["intent_choice"]
+        .resolutions.resolutions_per_authority[0]
+        .values[0]
+        .value.name
+    )
     print(intent_choice)
 
     if intent_choice == "scan room":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="ScanRoom"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="ScanRoom"))
+        ).response
     elif intent_choice == "pick up from the ground":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="HandFromGround"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="HandFromGround"))
+        ).response
     elif intent_choice == "move to a table":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="MoveToTable"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="MoveToTable"))
+        ).response
     elif intent_choice == "reach for a table":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="GrabFromTable"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
+        ).response
     elif intent_choice == "repeat":
         intent_choice = None
-        #handler_input.attributes_manager.set_session_attributes(None)
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="GetIntentsList"))).response
+        # handler_input.attributes_manager.set_session_attributes(None)
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="GetIntentsList"))
+        ).response
     else:
         return handler_input.response_builder.speak("Ok. Goodbye")
+
 
 @sb.request_handler(can_handle_func=is_intent_name("ChooseIntent"))
 def choose_intent_handler(handler_input):
     # type: (HandlerInput) -> Response
-    
-    intent_choice = handler_input.request_envelope.request.intent.slots['intent_choice'].resolutions.resolutions_per_authority[0].values[0].value.name
+
+    intent_choice = (
+        handler_input.request_envelope.request.intent.slots["intent_choice"]
+        .resolutions.resolutions_per_authority[0]
+        .values[0]
+        .value.name
+    )
 
     if intent_choice == "scan room":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="ScanRoom"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="ScanRoom"))
+        ).response
     elif intent_choice == "pick up from the ground":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="HandFromGround"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="HandFromGround"))
+        ).response
     elif intent_choice == "move to a table":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="MoveToTable"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="MoveToTable"))
+        ).response
     elif intent_choice == "reach for a table":
-        return handler_input.response_builder.add_directive(DelegateDirective(updated_intent=Intent(name="GrabFromTable"))).response
+        return handler_input.response_builder.add_directive(
+            DelegateDirective(updated_intent=Intent(name="GrabFromTable"))
+        ).response
     else:
         return handler_input.response_builder.speak("Ok. No action selected.")
+
 
 @sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
 def user_custom_action_intent_handler(handler_input):
@@ -346,27 +466,32 @@ def user_custom_action_intent_handler(handler_input):
 
     return handler_input.response_builder.speak(speech).response
 
+
 skill_response = SkillAdapter(
-    skill=sb.create(), skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188", app=app)
+    skill=sb.create(),
+    skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188",
+    app=app,
+)
 
 skill_response.register(app=app, route="/")
 
 ###### Page interactions
 
-@app.route('/button_click', methods=['POST'])
+
+@app.route("/button_click", methods=["POST"])
 def button_click():
     global current_intent, current_movement
 
-    button_id = request.form.get('button_id')
+    button_id = request.form.get("button_id")
 
     if "scan_room" == button_id:
         set_intent_info(Intents.SCAN_ROOM)
     elif "grab_from_table" == button_id:
         set_intent_info(Intents.REACH_TABLE)
     elif "move_to_table" == button_id:
-        set_intent_info(Intents.MOVE_TO_TABLE)
+        set_intent_info(Intents.GET_TABLES)
     elif "grab_from_ground" == button_id:
-        set_intent_info(Intents.GRAB_FROM_GROUND)
+        set_intent_info(Intents.GET_OBJECTS)
     elif "stop" == button_id:
         set_intent_info(Intents.STOP)
     elif "stow" == button_id:
@@ -374,14 +499,15 @@ def button_click():
     elif "small_move_test" == button_id:
         set_intent_info(Intents.TEST_LIFT_SMALL)
 
-    return jsonify({'result': button_id})
+    return jsonify({"result": button_id})
 
-@app.route('/custom_intent', methods=['POST'])
+
+@app.route("/custom_intent", methods=["POST"])
 def custom_intent_builder():
     global custom_intent
 
     if custom_intent != None:
-        id = request.form.get('button_id')
+        id = request.form.get("button_id")
         print(id)
 
         if id == "clear":
@@ -391,29 +517,29 @@ def custom_intent_builder():
         else:
             custom_intent.append(id)
 
-        return jsonify({'result': id})
+        return jsonify({"result": id})
     else:
         result = "please choose an action"
         print(result)
 
-        return jsonify({'result': result})
-    
-   
- 
-@app.route('/radio_selection', methods=['POST'])
+        return jsonify({"result": result})
+
+
+@app.route("/radio_selection", methods=["POST"])
 def radio_selection():
     global custom_intent, custom_intent_array
 
-    selected_option = request.form['radioOption']
+    selected_option = request.form["radioOption"]
     # Perform server-side actions based on which radio button was selected
-    if selected_option == 'option1':
+    if selected_option == "option1":
         custom_intent = custom_intent_array[0]
-    elif selected_option == 'option2':
+    elif selected_option == "option2":
         custom_intent = custom_intent_array[1]
-    elif selected_option == 'option3':
+    elif selected_option == "option3":
         custom_intent = custom_intent_array[2]
 
-    return jsonify({'result': selected_option})
+    return jsonify({"result": selected_option})
+
 
 def set_intent_info(intent_num):
     global current_intent, current_movement, node_data
@@ -436,44 +562,99 @@ def set_intent_info(intent_num):
         current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
     elif intent_num == Intents.TEST_LIFT_SMALL:
         intent_name = "testing"
-    
+    else:
+        intent_name = "other"
+
     current_intent = intent_name
-    node_data['intent'] = intent_num.value
-    print(intent_name)
+    node_data["intent"] = intent_num.value
+    # print(intent_name)
+
 
 #### ros2 node ####
 class WebPageNode(Node):
     def __init__(self):
-        super().__init__('web_page_node')
-        self.publisher = self.create_publisher(Int32, 'selected_intent_topic', 10)
-        self.get_logger().info('Initialized')
+        super().__init__("web_page_node")
+        self.publisher = self.create_publisher(Int32, "selected_intent_topic", 10)
+        self.publisher = self.create_publisher(Int32, "selected_table_topic", 10)
+        self.publisher = self.create_publisher(Int32, "selected_object_topic", 10)
+
+        self.subscribtion = self.create_subscription(
+            Int32, "num_objects_topic", self.num_objects_callback, 10
+        )
+        self.subscribtion = self.create_subscription(
+            Int32, "num_tables_topic", self.num_tables_callback, 10
+        )
+        self.subscribtion
+
+        self.get_logger().info("Initialized")
         self.create_timer(1.0, self.publish_message)
 
+    def num_objects_callback(self, msg):
+        global num_objects
+
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        num = int(f"{msg.data}")
+        num_objects = num
+
+    def num_tables_callback(self, msg):
+        global num_tables
+
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        num = int(f"{msg.data}")
+        self.issue_alexa_command(num)
+        num_tables = num
+
     def publish_message(self):
+        self.publish_intent()
+        self.publish_chosen_object()
+        self.publish_chosen_table
+
+    def publish_intent(self):
         global node_data
         msg = Int32()
-        if node_data['intent'] != 1111:
-            msg.data = node_data['intent']
+        if node_data["intent"] != 1111:
+            msg.data = node_data["intent"]
             self.publisher.publish(msg)
-            self.get_logger().info(f'Publishing: {msg.data}')
-            node_data['intent'] = 1111
+            self.get_logger().info(f"Publishing: {msg.data}")
+            node_data["intent"] = 1111
+
+    def publish_chosen_object(self):
+        global chosen_object
+        msg = Int32()
+        if chosen_object >= 0:
+            msg.data = chosen_object
+            self.publisher.publish(msg)
+            self.get_logger().info(f"Publishing num_objects: {msg.data}")
+            chosen_object = -1
+
+    def publish_chosen_table(self):
+        global chosen_table
+        msg = Int32()
+        if chosen_table >= 0:
+            msg.data = chosen_table
+            self.publisher.publish(msg)
+            self.get_logger().info(f"Publishing num_tables: {msg.data}")
+            chosen_table = -1
 
 def run_ros2_node():
-     rclpy.init()
-     node = WebPageNode()
-     rclpy.spin(node)
-     node.destory_node()
-     rclpy.shutdown()
+    rclpy.init()
+    node = WebPageNode()
+    rclpy.spin(node)
+    node.destory_node()
+    rclpy.shutdown()
+
 
 def run_flask_server():
-     print("running flask")
-     app.run(port = PORT)
+    print("running flask")
+    app.run(port=PORT)
+
 
 def main():
-     flask_thread = threading.Thread(target=run_flask_server)
-     flask_thread.start()
+    flask_thread = threading.Thread(target=run_flask_server)
+    flask_thread.start()
 
-     run_ros2_node()
+    run_ros2_node()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
