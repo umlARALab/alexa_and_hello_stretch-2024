@@ -62,7 +62,7 @@ class AlexaCommands(Node):
         # self.robot.stop()
 
     def move_lift_small(self):
-        self.robot.lift.move_to(.9)
+        self.robot.lift.move_to(.5)
         self.robot.push_command()
 
     # def scan_room(self):
