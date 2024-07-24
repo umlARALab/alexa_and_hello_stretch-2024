@@ -3,6 +3,7 @@
 from flask import Flask, render_template, jsonify, request
 
 # imports needed for ASK SDK
+#test git
 from flask_ask_sdk.skill_adapter import SkillAdapter
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import (
@@ -44,7 +45,7 @@ PORT = 9999
 app = Flask(
     __name__,
     # location of html template on Stretch
-    # template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
+    template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
 )
 
 node_data = {"intent": 1111}
