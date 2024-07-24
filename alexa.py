@@ -445,26 +445,22 @@ def choose_intent_handler(handler_input):
 
 @sb.request_handler(can_handle_func=is_intent_name("UserCustomAction"))
 def user_custom_action_intent_handler(handler_input):
-    global current_intent, custom_intent, send_custom_intent
+    global custom_intent, send_custom_intent
 
-    # custom_intent_num = handler_input.request_envelope.request.intent.slots['custom_intent_num']
-    # print(custom_intent_num)
-    speech = "I'm sorry, there are only three custom actions available."
+    custom_intent_num = int(handler_input.request_envelope.request.intent.slots['custom_intent_num'].value)
+    print(custom_intent_num)
 
-    # if custom_intent is not None:
-    #     custom_intent_num = custom_intent_num.resolutions.resolutions_per_authority[0].values[0].value.name
-    #     print(custom_intent_num)
+    # current_intent = "Hello Stretch " + custom_intent_array[custom_intent_num][0]
 
-    #     current_intent = "Hello Stretch " + custom_intent_array[custom_intent_num][0]
+    speech = f"Ok. Running {custom_intent_array[(custom_intent_num - 1)][0]}."
 
-    #     if custom_intent_num == 1:
-    #         speech = "Ok. Running Custom Action 1."
-    #     elif custom_intent_num == 2:
-    #         speech = "Ok. Running Custom Action 2."
-    #     elif custom_intent_num == 3:
-    #         speech = "Ok. Running Custom Action 3."
-    #     else:
-    #         speech = "I'm sorry, there are only three custom actions available."
+    match custom_intent_num:
+        case 1:
+            set_intent_info(Intents.CUSTOM_1)
+        case 2:
+            set_intent_info(Intents.CUSTOM_2)
+        case 3:
+            set_intent_info(Intents.CUSTOM_3)
 
     send_custom_intent = True
 
@@ -734,6 +730,7 @@ class WebPageNode(Node):
 
         if custom_intent_array[num] is not "":
             msg.data = ", ".join(custom_intent_array[num])
+            print(msg.data)
             self.custom_publisher.publish(msg)
             self.get_logger().info(f"Publishing custom action " + str(num))
 
