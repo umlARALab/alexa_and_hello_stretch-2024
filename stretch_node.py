@@ -1,24 +1,29 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int32, String
+from std_msgs.msg import Int32, String, Float32, Bool
 from std_srvs.srv import Trigger
 
-# import alexa_and_stretch.util as util
-# from alexa_and_stretch.util import Intents
-import util
-from util import Intents
+# with robot
+import alexa_and_stretch.util as util
+from alexa_and_stretch.util import Intents
+
+# with vm
+# import util
+# from util import Intents
+
 import time
 import math
 
-# import stretch_body
-# import stretch_body.robot as rb
+import stretch_body
+import stretch_body.robot as rb
 
 #### Constants
 tables = []
 objects = []
 chosen_obj = -1
 chosen_table = -1
+demo_cube_height = -1
 
 class AlexaCommands(Node):
 
@@ -31,26 +36,45 @@ class AlexaCommands(Node):
         self.intent_subscribtion = self.create_subscription(
             Int32, "selected_intent_topic", self.intent_listener_callback, 10
         )
-        self.table_subscribtion = self.create_subscription(
-            Int32, "selected_table_topic", self.table_listener_callback, 10
+
+        self.gripper_state_subscribtion = self.create_subscription(
+            Bool, "gripper_state_topic", self.gripper_listener_callback, 10
         )
-        self.object_subscribtion = self.create_subscription(
-            Int32, "selected_object_topic", self.object_listener_callback, 10
+
+        # self.table_subscribtion = self.create_subscription(
+        #     Int32, "selected_table_topic", self.table_listener_callback, 10
+        # )
+        # self.object_subscribtion = self.create_subscription(
+        #     Int32, "selected_object_topic", self.object_listener_callback, 10
+        # )
+
+        self.demo_cube_height_subscribtion = self.create_subscription(
+            Float32, "cube_demo_height", self.cube_listener_callback, 10
         )
+
         self.custom_subscribtion = self.create_subscription(
             String, "custom_intent_topic", self.custom_listener_callback, 10
         )
 
         self.get_logger().info("Initialized")
-        # self.create_timer(1.0, self.publish_message)
+        self.create_timer(1.0, self.publish_message)
 
-        # self.robot = rb.Robot()
-        # self.robot.startup()
+        self.robot = rb.Robot()
+        self.robot.startup()
 
     def intent_listener_callback(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
         num = int(f"{msg.data}")
         self.issue_alexa_command(num)
+
+    def gripper_listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        self.change_gripper_state(msg)
+        
+    def cube_listener_callback(self, msg):
+        global demo_cube_height
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        demo_cube_height = float(f"{msg.data}")
 
     def table_listener_callback(self, msg):
         global chosen_table
@@ -90,19 +114,22 @@ class AlexaCommands(Node):
                 # self.reach_table
             case Intents.MOVE_TO_TABLE.value:
                 self.get_logger().info("move table")
-                self.get_table()
+                # self.get_table()
             case Intents.GRAB_FROM_GROUND.value:
                 self.get_logger().info("grab obj")
-                self.get_object()
+                # self.get_object()
             case Intents.GET_TABLES.value:
                 self.get_logger().info("get table")
-                self.look_for_tables()
+                # self.look_for_tables()
             case Intents.GET_OBJECTS.value:
                 self.get_logger().info("get obj")
-                self.look_for_objects()
+                # self.look_for_objects()
             case Intents.TEST_LIFT_SMALL.value:
                 self.get_logger().info("small")
-                # self.move_lift_small()
+                self.move_lift_small()
+            case Intents.CUBE_DEMO.value:
+                self.get_logger().info("cube demo")
+                self.grab_cube_demo()
 
         # self.robot.stop()
 
@@ -144,9 +171,29 @@ class AlexaCommands(Node):
         
         self.robot.push_command()
 
-    def move_lift_small(self):
-        self.robot.lift.move_to(0.5)
+    def grab_cube_demo(self):
+        global demo_cube_height
+        self.robot.lift.move_to(demo_cube_height)
+        print(demo_cube_height)
+        self.robot.end_of_arm.move_to("wrist_pitch", 0)
+        self.robot.end_of_arm.move_to("stretch_gripper", 50)
         self.robot.push_command()
+
+    def move_lift_small(self):
+        self.robot.lift.move_to(1)
+        self.robot.end_of_arm.move_to("wrist_pitch", -1.5)  # point down
+        self.robot.end_of_arm.move_to("stretch_gripper", -50)
+        self.robot.push_command()
+
+    def change_gripper_state(self, close):
+        print("in")
+
+        if close:
+            print("close")
+            self.robot.end_of_arm.move_to("stretch_gripper", -50)
+        else:
+            print("open")
+            self.robot.end_of_arm.move_to("stretch_gripper", 50)
 
     def scan_room(self):
         self.robot.head.move_to("head_pan", 1.77)
@@ -272,8 +319,9 @@ class AlexaCommands(Node):
         self.robot.base.push_command()
     
     def publish_message(self):
-        self.publish_objects_message()
-        self.publish_tables_message()
+        pass
+        # self.publish_objects_message()
+        # self.publish_tables_message()
 
     def publish_objects_message(self):
         global objects

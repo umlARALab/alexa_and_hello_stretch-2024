@@ -13,6 +13,7 @@ class Intents(Enum):
     CUSTOM_1 = 10
     CUSTOM_2 = 11
     CUSTOM_3 = 12
+    CUBE_DEMO = 13
 
 BASE_LENGTH = .34
 BASE_WIDTH = .33

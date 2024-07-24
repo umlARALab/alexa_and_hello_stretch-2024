@@ -3,7 +3,6 @@
 from flask import Flask, render_template, jsonify, request
 
 # imports needed for ASK SDK
-#test git
 from flask_ask_sdk.skill_adapter import SkillAdapter
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import (
@@ -30,10 +29,10 @@ import rclpy
 from rclpy.node import Node
 import threading
 import rclpy.publisher
-from std_msgs.msg import Int32, String
+from std_msgs.msg import Int32, String, Float32, Bool
 
-# from alexa_and_stretch.util import Intents
-from util import Intents
+from alexa_and_stretch.util import Intents
+# from util import Intents
 
 # port for local hosting
 PORT = 9999
@@ -45,7 +44,7 @@ PORT = 9999
 app = Flask(
     __name__,
     # location of html template on Stretch
-    template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
+    template_folder="/home/csrobot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates/",
 )
 
 node_data = {"intent": 1111}
@@ -67,6 +66,8 @@ custom_intent_num = -1
 # variables for user selection
 num_objects = 0
 chosen_object = -1
+demo_cube_height = -1
+close_gripper = False
 
 num_tables = 0
 chosen_table = -1
@@ -469,9 +470,37 @@ def user_custom_action_intent_handler(handler_input):
 
     return handler_input.response_builder.speak(speech).response
 
+@sb.request_handler(can_handle_func=is_intent_name("GrabCubeDemo"))
+def grab_cube_demo_intent_handler(handler_input):
+    global demo_cube_height
+
+    set_intent_info(Intents.CUBE_DEMO)
+
+    demo_cube_height = float(handler_input.request_envelope.request.intent.slots["cube_height"].value)
+
+    speech_text = (f"Okay, Stretch is moving the lift up to {demo_cube_height} meters and getting ready to grab the cube. Please let me know when to close the gripper.")
+
+    handler_input.response_builder.speak(speech_text).add_directive(ElicitSlotDirective(
+                updated_intent=Intent(name="ChangeGripperState"), slot_to_elicit="gripper_state"
+            ))
+
+    return handler_input.response_builder.response
+
+@sb.request_handler(can_handle_func=is_intent_name("ChangeGripperState"))
+def change_gripper_state_intent_handler(handler_input):
+    global close_gripper
+
+    speech_text = "Closing the gripper!"
+
+    state = handler_input.request_envelope.request.intent.slots['gripper_state'].resolutions.resolutions_per_authority[0].values[0].value.name
+
+    match state:
+        case "close":
+            close_gripper = True
+
+    return handler_input.response_builder.speak(speech_text).response
 
 # Create skill
-
 skill_response = SkillAdapter(
     skill=sb.create(),
     skill_id="amzn1.ask.skill.061821fa-7468-4690-8a26-f559e7232188",
@@ -509,6 +538,8 @@ def button_click():
             print("!")
             set_intent_info(Intents.CUSTOM_1)
             send_custom_intent = True
+        case "grab_cube":
+            set_intent_info(Intents.CUBE_DEMO)
 
     return jsonify({"result": button_id})
 
@@ -554,7 +585,7 @@ def radio_selection():
 
 
 def set_intent_info(intent_num):
-    global current_intent, current_movement, node_data, custom_intent_num
+    global current_intent, current_movement, node_data, custom_intent_num, demo_cube_height
 
     match intent_num:
         case Intents.STOP:
@@ -584,6 +615,9 @@ def set_intent_info(intent_num):
         case Intents.CUSTOM_3:
             intent_name = "custom 3"
             custom_intent_num = 2
+        case Intents.CUBE_DEMO:
+            intent_name = "Preparing to Grab a Cube Demo"
+            demo_cube_height = .5
         case _:
             intent_name = "other"
 
@@ -602,7 +636,9 @@ class WebPageNode(Node):
         self.intent_publisher = self.create_publisher(Int32, "selected_intent_topic", 10)
         self.table_publisher = self.create_publisher(Int32, "selected_table_topic", 10)
         self.object_publisher = self.create_publisher(Int32, "selected_object_topic", 10)
+        self.cube_height_publisher = self.create_publisher(Float32, "cube_demo_height", 10)
         self.custom_publisher = self.create_publisher(String, "custom_intent_topic", 10)
+        self.gripper_state_publisher = self.create_publisher(Bool, "gripper_state_topic", 10)
 
         self.num_objects_subscribtion = self.create_subscription(
             Int32, "num_objects_topic", self.num_objects_callback, 10
@@ -632,14 +668,35 @@ class WebPageNode(Node):
     def publish_message(self):
         global send_custom_intent
 
+        self.publish_demo_cube_height()
+        self.publish_gripper_state()
+        # self.publish_chosen_object()
+        # self.publish_chosen_table()
+
         self.publish_intent()
-        self.publish_chosen_object()
-        self.publish_chosen_table()
 
         if send_custom_intent is True:
-            
             self.publish_custom_intent(custom_intent_num)
             send_custom_intent = False
+    
+    def publish_gripper_state(self):
+        global close_gripper
+
+        msg = Bool()
+        msg.data = close_gripper
+
+        if close_gripper is True:
+            self.gripper_state_publisher.publish(msg)
+            close_gripper = False
+
+    def publish_demo_cube_height(self):
+        global demo_cube_height
+        msg = Float32()
+        if demo_cube_height >= 0:
+            msg.data = demo_cube_height
+            self.cube_height_publisher.publish(msg)
+            self.get_logger().info(f"Publishing: {msg.data}")
+            demo_cube_height = -1
 
     def publish_intent(self):
         global node_data
