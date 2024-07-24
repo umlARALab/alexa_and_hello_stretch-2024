@@ -44,7 +44,7 @@ PORT = 9999
 app = Flask(
     __name__,
     # location of html template on Stretch
-    # template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
+    template_folder="/home/hello-robot/ament_ws/src/alexa_and_stretch/alexa_and_stretch/templates",
 )
 
 node_data = {"intent": 1111}
