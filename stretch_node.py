@@ -6,7 +6,7 @@ from std_srvs.srv import Trigger
 
 # with robot
 import alexa_and_stretch.util as util
-from alexa_and_stretch.util import Intents
+from alexa_and_stretch.util import Intents, CustomMovements
 
 # with vm
 # import util
@@ -134,42 +134,102 @@ class AlexaCommands(Node):
         # self.robot.stop()
 
     def run_custom_intent(self, custom_intent):
-
-        # use util CUSTOM
-        # check to make sure it does not exceed limits first
-        # need to subscribe to joint states and whatever will give you limits
-
+        print(custom_intent)
 
         for i in custom_intent:
             match i:
                 case "Forward":
+                    print("f")
+                    # self.robot.base.translate_by(CustomMovements.BASE_MOVE)
                     pass
                 case "Backwards":
+                    print("b")
+                    # self.robot.base.translate_by(-CustomMovements.BASE_MOVE)
                     pass
                 case "Turn Left":
+                    print("l")
+                    # self.robot.base.rotate_by(CustomMovements.BASE_ROTATION)
                     pass
                 case "Turn Right":
+                    print("r")
+                    # self.robot.base.rotate_by(-CustomMovements.BASE_ROTATION)
                     pass
                 case "Move Lift Up":
-                    pass
+                    print("up")
+                    # current_height = self.robot.lift.status['pos']
+                    # max_height = self.robot.lift.soft_motion_limits['hard'][1]
+                    # if current_height + CustomMovements.LIFT_MOVE.value <= max_height:
+                    #     self.robot.lift.move_by(CustomMovements.LIFT_MOVE.value)
+                    # else:
+                    #     self.robot.lift.move_to(max_height)
+                    
+                    self.robot.lift.move_by(CustomMovements.LIFT_MOVE.value)
+                    # self.robot.lift.motor.wait_until_at_setpoint()
                 case "Move Lift Down":
-                    pass
+                    print("down")
+                    # current_height = self.robot.lift.status['pos']
+                    # min_height = self.robot.lift.soft_motion_limits['hard'][0]
+                    # if current_height - CustomMovements.LIFT_MOVE.value >= min_height:
+                    #     self.robot.lift.move_by(-1*CustomMovements.LIFT_MOVE.value)
+                    # else:
+                    #     self.robot.lift.move_to(min_height)
+                    
+                    self.robot.lift.move_by(-1*CustomMovements.LIFT_MOVE.value)
+                    # self.robot.lift.motor.wait_until_at_setpoint()
                 case "Extend Arm":
-                    pass
+                    print("out")
+                    # current_length = self.robot.lift.status['pos']
+                    # max_length = self.robot.arm.soft_motion_limits['hard'][1]
+                    # if current_length + CustomMovements.ARM_MOVE.value <= max_length:
+                    #     self.robot.arm.move_by(CustomMovements.LIFT_MOVE.value)
+                    # else:
+                    #     self.robot.arm.move_to(max_length)
+                    
+                    self.robot.arm.move_by(CustomMovements.LIFT_MOVE.value)
+                    # self.robot.arm.motor.wait_until_at_setpoint()
                 case "Collapse Arm":
-                    pass
+                    print("arm in")
+                    # current_length = self.robot.lift.status['pos']
+                    # min_length = self.robot.arm.soft_motion_limits['hard'][0]
+                    # if current_length - CustomMovements.ARM_MOVE.value >= min_length:
+                    #     self.robot.arm.move_by(-1*CustomMovements.LIFT_MOVE.value)
+                    # else:
+                    #     self.robot.arm.move_to(min_length)
+                    
+                    self.robot.arm.move_by(-1*CustomMovements.LIFT_MOVE.value)
+                    # self.robot.arm.motor.wait_until_at_setpoint()
                 case "Rotate Wrist Left":
-                    pass
+                    print("rl")
+                    # current_angle = self.robot.end_of_arm.get_joint('wrist_yaw').status['pos']
+                    # low_angle = self.robot.end_of_arm.get_joint('wrist_yaw').soft_motion_limits['hard'][0]
+                    # if current_angle - CustomMovements.WRIST_ROTATION.value >= low_angle:
+                    #     self.robot.end_of_arm.move_by("wrist_yaw", -1*CustomMovements.WRIST_ROTATION.value)
+                    # else:
+                    #     self.robot.end_of_arm.move_to("wrist_yaw", low_angle)
+                    
+                    self.robot.end_of_arm.move_by("wrist_yaw", -1*CustomMovements.WRIST_ROTATION.value)
                 case "Rotate Wrist Right":
-                    pass
+                    # print("rr")
+                    # current_angle = self.robot.end_of_arm.get_joint('wrist_yaw').status['pos']
+                    # max_angle = self.robot.end_of_arm.get_joint('wrist_yaw').soft_motion_limits['hard'][1]
+                    # if current_angle + CustomMovements.WRIST_ROTATION.value <= max_angle:
+                    #     self.robot.end_of_arm.move_by("wrist_yaw", CustomMovements.WRIST_ROTATION.value)
+                    # else:
+                    #     self.robot.end_of_arm.move_to("wrist_yaw", max_angle)
+
+                    self.robot.end_of_arm.move_by("wrist_yaw", CustomMovements.WRIST_ROTATION.value)
                 case "Open Gripper":
-                    pass
+                    print("o")
+                    self.change_gripper_state(False)
                 case "Close Gripper":
-                    pass
+                    print("c")
+                    self.change_gripper_state(True)
                 case "Wait":
-                    pass
+                    print("w")
+                    time.sleep(CustomMovements.WAIT_TIME.value)
         
-        self.robot.push_command()
+            self.robot.push_command()
+            time.sleep(1)
 
     def grab_cube_demo(self):
         global demo_cube_height
@@ -186,13 +246,10 @@ class AlexaCommands(Node):
         self.robot.push_command()
 
     def change_gripper_state(self, close):
-        print("in")
 
         if close:
-            print("close")
             self.robot.end_of_arm.move_to("stretch_gripper", -50)
         else:
-            print("open")
             self.robot.end_of_arm.move_to("stretch_gripper", 50)
 
     def scan_room(self):

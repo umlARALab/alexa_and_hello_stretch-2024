@@ -27,10 +27,11 @@ GROUND_REACH_HEIGHT = 0.2
 ARM_OUT_TO_TABLE_LEN = .3
 
 class CustomMovements(Enum):
-    BASE_MOVE = .25
-    BASE_ROTATION = 1.5
-    LIFT_MOVE = .1
-    ARM_MOVE = .1
-    WRIST_ROTATION = 1.5
+    BASE_MOVE = .05         # meters
+    BASE_ROTATION = 1       # radians
+    LIFT_MOVE = .05         # meters
+    ARM_MOVE = .01          # meters
+    WRIST_ROTATION = 1      # radians
+    WAIT_TIME = 5           # seconds
 
 
