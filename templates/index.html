@@ -4,6 +4,83 @@
     <head>
         <title>Amazon Alexa & Hello Stretch Interface</title>
 
+        <!-- Styles -->
+
+        <style>
+           body {
+                background-color: linen;
+            }
+
+            h1 {
+                color: rgb(24, 12, 2);
+                text-align: center;
+                font-family: Verdana, sans-serif;
+                font-weight: bolder;
+            } 
+
+            h2 {
+                color: rgb(24, 12, 2);
+                text-align: center;
+                font-family: Verdana, sans-serif;
+            }
+
+            h3, h4 {
+                color: rgb(12, 47, 141);
+                text-align: center;
+                font-family: Verdana, sans-serif;
+            }
+
+            p {
+                color: rgb(24, 12, 2);
+                text-align: center;
+                font-family: Verdana, sans-serif;
+            }
+
+            .btn-action {
+                background-color: linen;
+                text-align: center;
+                text-decoration: none ;
+                display: inline-block;
+                font-family: Verdana, sans-serif;
+                font-size: 15px;
+                width: 200px;
+                height: 35px;
+                margin: 0px 20px;
+                cursor: pointer;
+            }
+
+            .btn-intents {
+                border: 5px solid rgb(31, 75, 197);
+                background-color: rgb(26, 62, 161);
+                text-align: center;
+                text-decoration: none ;
+                display: inline-block;
+                font-family: Verdana, sans-serif;
+                font-size: 13px;
+                width: 200px;
+                height: 50px;
+                margin: 0px 10px;
+                cursor: pointer;
+                color: linen;
+            }
+
+            label, form {
+                text-align: center;
+                font-family: Verdana, sans-serif;
+
+            }
+
+            .buttondiv {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 40px;
+                margin: 10px 0px 10px 0px;
+                padding: 5px 5px 5px 5px;
+            }
+
+        </style>
+
         <!-- Sends POST requests when certian features (buttons. radio buttons) are clicked-->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script type="text/javascript">
@@ -56,8 +133,8 @@
         </div>
 
         <!-- Buttons to run Alexa intents -->
-        <div id='ButtonMode'>
-            <h2>Action Buttons</h2>
+        <h2>Action Buttons:</h2>
+        <div class='buttondiv' id='ButtonMode'>
             <button id="scan_room" class="btn-intents" onClick="refreshPage()">Scan Room</button>
             <button id="grab_from_table" class="btn-intents" onClick="refreshPage()">Grab From Table</button>
             <button id="move_to_table" class="btn-intents" onClick="refreshPage()">Move To Table</button>
@@ -73,7 +150,7 @@
 
         <!-- Radio buttons and buttons for building custom intents -->
         <div id='CustomIntent'>
-            <h2>Make a custom action</h2>
+            <h2>Make a Custom Action:</h2>
             <h4>Which action would you like to create?</h4>
 
             <!-- Selects which custom intent to edit -->
@@ -87,27 +164,27 @@
             </form>
 
             <!-- Buttons to add different motions for Stretch to custom intents -->
-            <div>
+            <div style="background-color: rgb(105, 143, 246)" class='buttondiv'>
                 <button id="Base Forward" class="btn-action" onClick="refreshPage()">Forward</button>
                 <button id="Base Backwards" class="btn-action" onClick="refreshPage()">Backwards</button>
                 <button id="Turn Left" class="btn-action" onClick="refreshPage()">Turn Left</button>
                 <button id="Turn Right" class="btn-action" onClick="refreshPage()">Turn Right</button>
             </div>
-            <div>
+            <div style="background-color: rgb(62, 104, 219)" class='buttondiv'>
                 <button id="Move Lift Up" class="btn-action" onClick="refreshPage()">Move Lift Up</button>
                 <button id="Move Lift Down" class="btn-action" onClick="refreshPage()">Move Lift Down</button>
                 <button id="Extend Arm" class="btn-action" onClick="refreshPage()">Extend Arm</button>
                 <button id="Collapse Arm" class="btn-action" onClick="refreshPage()">Collapse Arm</button>
             </div>
-            <div>
+            <div style="background-color: rgb(31, 75, 197)" class='buttondiv'>
                 <button id="Rotate Wrist Left" class="btn-action" onClick="refreshPage()">Rotate Wrist Left</button>
                 <button id="Rotate Wrist Right" class="btn-action" onClick="refreshPage()">Rotate Wrist Right</button>
             </div>
-            <div>
+            <div style="background-color: rgb(26, 62, 161)" class='buttondiv'>
                 <button id="Open Gripper" class="btn-action" onClick="refreshPage()">Open Gripper</button>
                 <button id="Close Gripper" class="btn-action" onClick="refreshPage()">Close Gripper</button>
             </div>
-            <div>
+            <div style="background-color: rgb(12, 47, 141)" class='buttondiv'>
                 <button id="Clear" class="btn-action" onClick="refreshPage()">Clear</button>
                 <button id="Wait" class="btn-action" onClick="refreshPage()">Wait</button>
             </div>
@@ -115,5 +192,7 @@
                 <p>{{ custom}}</p>
             </div>
         </div>
+
+        <p style="font-size: 10px;"> Samantha Saak • 2024 • Univeristy of Massachusetts ARA Lab </p>
     </body>
 </html>  

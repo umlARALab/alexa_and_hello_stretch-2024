@@ -548,7 +548,7 @@ def custom_intent_builder():
         id = request.form.get("button_id")
         print(id)
 
-        if id == "clear":
+        if id == "Clear":
             name = custom_intent[0]
             custom_intent.clear()
             custom_intent.append(name)
