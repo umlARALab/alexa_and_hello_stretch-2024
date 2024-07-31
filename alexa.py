@@ -111,7 +111,7 @@ def hello_world_intent_handler(handler_input):
     global current_intent
     current_intent = "Hello World Intent"
 
-    speech_text = "Hello World!"
+    speech_text = "Stretch says hello!"
 
     handler_input.response_builder.speak(speech_text).set_card(
         SimpleCard("Hello World", speech_text)
@@ -474,7 +474,12 @@ def grab_cube_demo_intent_handler(handler_input):
 
     demo_cube_height = float(handler_input.request_envelope.request.intent.slots["cube_height"].value)
 
-    speech_text = (f"Okay, Stretch is moving the lift up to {demo_cube_height} meters and getting ready to grab the cube. Please let me know when to close the gripper.")
+    if demo_cube_height > 1.1:
+        demo_cube_height = 1.1
+    elif demo_cube_height < 0:
+        demo_cube_height = 0
+
+    speech_text = (f"Okay, Stretch is moving the lift to {demo_cube_height} meters and getting ready to grab the cube. Please let me know when to close the gripper.")
 
     handler_input.response_builder.speak(speech_text).add_directive(ElicitSlotDirective(
                 updated_intent=Intent(name="ChangeGripperState"), slot_to_elicit="gripper_state"
@@ -490,9 +495,10 @@ def change_gripper_state_intent_handler(handler_input):
 
     state = handler_input.request_envelope.request.intent.slots['gripper_state'].resolutions.resolutions_per_authority[0].values[0].value.name
 
-    match state:
-        case "close":
-            close_gripper = True
+    if state == "close": 
+        print("in1")
+        close_gripper = True
+        
 
     return handler_input.response_builder.speak(speech_text).response
 
@@ -529,12 +535,14 @@ def button_click():
         case "stow":
             set_intent_info(Intents.STOW)
         case "small_move_test":
+            print("small move test")
             set_intent_info(Intents.TEST_LIFT_SMALL)
         case "custom_1":
             print("!")
             set_intent_info(Intents.CUSTOM_1)
             send_custom_intent = True
         case "grab_cube":
+            print("grab cube")
             set_intent_info(Intents.CUBE_DEMO)
 
     return jsonify({"result": button_id})
@@ -601,25 +609,24 @@ def set_intent_info(intent_num):
             intent_name = "Hello Stretch Hand From Ground"
             current_movement = "Rotate base, move forward, open gripper, move lift down, close gripper, move life up, rotate base, and move forward again to return to the start"
         case Intents.TEST_LIFT_SMALL:
-            intent_name = "testing"
+            intent_name = "Testing Lift Movement"
         case Intents.CUSTOM_1:
-            intent_name = "custom 1"
+            intent_name = "Custom Action 1"
             custom_intent_num = 0
         case Intents.CUSTOM_2:
-            intent_name = "custom 2"
+            intent_name = "Custom Action 2"
             custom_intent_num = 1
         case Intents.CUSTOM_3:
-            intent_name = "custom 3"
+            intent_name = "Custom Action 3"
             custom_intent_num = 2
         case Intents.CUBE_DEMO:
-            intent_name = "Preparing to Grab a Cube Demo"
+            intent_name = "Preparing To Grab a Cube -- Demo"
+            current_movement = "Move lift to desired height and open gripper."
             demo_cube_height = .5
-        case _:
-            intent_name = "other"
 
     current_intent = intent_name
     node_data["intent"] = intent_num.value
-    # print(intent_name)
+    print(intent_name)
 
 
 # --------------------------------------------------------------------
@@ -682,6 +689,7 @@ class WebPageNode(Node):
         msg.data = close_gripper
 
         if close_gripper is True:
+            print("in2")
             self.gripper_state_publisher.publish(msg)
             close_gripper = False
 

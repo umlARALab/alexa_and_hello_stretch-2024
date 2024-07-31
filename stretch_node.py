@@ -248,9 +248,9 @@ class AlexaCommands(Node):
     def change_gripper_state(self, close):
 
         if close:
-            self.robot.end_of_arm.move_to("stretch_gripper", -50)
+            self.robot.end_of_arm.move_to("stretch_gripper", -45)
         else:
-            self.robot.end_of_arm.move_to("stretch_gripper", 50)
+            self.robot.end_of_arm.move_to("stretch_gripper", 45)
 
     def scan_room(self):
         self.robot.head.move_to("head_pan", 1.77)
