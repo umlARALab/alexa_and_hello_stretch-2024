@@ -1,4 +1,4 @@
-# hello_stretch-24
+# Amazon Alexa Interface for Hello Robot Stretch
 
 ## Northeast Robotics Colloquium 2024
 - [Abstract ](https://drive.google.com/file/d/11xk7IMSRg9JOog_VYi3ULutABqEC2gn6/view?usp=sharing)
