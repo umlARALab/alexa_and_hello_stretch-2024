@@ -1,4 +1,9 @@
 # hello_stretch-24
+
+## Northeast Robotics Colloquium 2024
+- [Abstract ](https://drive.google.com/file/d/11xk7IMSRg9JOog_VYi3ULutABqEC2gn6/view?usp=sharing)
+- [NERC Poster](https://drive.google.com/file/d/1zgoK_flJWBnyLkWQNBFdELsKMdFZ-l3X/view?usp=sharing)
+- [Voice Demonstration](https://drive.google.com/file/d/1230zd375CXIY-eFQ7wZN2CJqmsuzElHU/view?usp=sharing)
  
 ## alexa.py – Alexa Node
 This serves as both a web server for a teleoperation interface and the back end for an Alexa Skill and a ROS2 node 
